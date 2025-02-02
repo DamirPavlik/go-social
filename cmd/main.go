@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat-go-htmx/cmd/auth"
+	"chat-go-htmx/cmd/search"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -82,7 +83,8 @@ func main() {
 	initDB(dbURL)
 
 	e := echo.New()
-	tmpl := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
+	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
+	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -104,20 +106,24 @@ func main() {
 		return c.File(viewsPath + "login.html")
 	})
 
+	e.GET("/search", func(c echo.Context) error {
+		return search.SearchUsers(c, db, tmplSearch)
+	})
+
 	e.POST("/register", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
 		if err == nil && cookie.Value != "" {
 			return c.Redirect(http.StatusSeeOther, "/")
 		}
-		return auth.RegisterUser(c, db, tmpl)
+		return auth.RegisterUser(c, db, tmplAuth)
 	})
 
 	e.POST("/login", func(c echo.Context) error {
-		return auth.LoginUser(c, db, tmpl)
+		return auth.LoginUser(c, db, tmplAuth)
 	})
 
 	e.POST("/logout", func(c echo.Context) error {
-		return auth.LogoutUser(c, tmpl)
+		return auth.LogoutUser(c, tmplAuth)
 	})
 
 	e.GET("/ws", handleConnections)
