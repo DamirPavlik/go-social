@@ -4,6 +4,7 @@ import (
 	"chat-go-htmx/cmd/auth"
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -79,7 +80,9 @@ func main() {
 		log.Fatal("dburl is not found in the environment")
 	}
 	initDB(dbURL)
+
 	e := echo.New()
+	tmpl := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -88,9 +91,11 @@ func main() {
 		}
 		return c.File(viewsPath + "index.html")
 	})
+
 	e.GET("/register", func(c echo.Context) error {
 		return c.File(viewsPath + "register.html")
 	})
+
 	e.GET("/login", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
 		if err == nil && cookie.Value != "" {
@@ -98,19 +103,27 @@ func main() {
 		}
 		return c.File(viewsPath + "login.html")
 	})
+
 	e.POST("/register", func(c echo.Context) error {
-		return auth.RegisterUser(c, db)
+		cookie, err := c.Cookie("session")
+		if err == nil && cookie.Value != "" {
+			return c.Redirect(http.StatusSeeOther, "/")
+		}
+		return auth.RegisterUser(c, db, tmpl)
 	})
+
 	e.POST("/login", func(c echo.Context) error {
-		return auth.LoginUser(c, db)
+		return auth.LoginUser(c, db, tmpl)
 	})
+
+	e.POST("/logout", func(c echo.Context) error {
+		return auth.LogoutUser(c, tmpl)
+	})
+
 	e.GET("/ws", handleConnections)
 
 	go handleMessages()
 
 	e.Static("/assets", "../assets")
-	e.GET("/debug", func(c echo.Context) error {
-		return c.String(200, "Static files are served from: assets/")
-	})
 	e.Logger.Fatal(e.Start(":8080"))
 }
