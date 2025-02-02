@@ -1,12 +1,21 @@
 package main
 
 import (
+	"chat-go-htmx/cmd/auth"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	_ "github.com/lib/pq"
 )
+
+var db *sql.DB
+var viewsPath = "../views/"
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -55,13 +64,46 @@ func handleMessages() {
 	}
 }
 
+func initDB(dbUrl string) {
+	var err error
+	db, err = sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
+	godotenv.Load("../.env")
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("dburl is not found in the environment")
+	}
+	initDB(dbURL)
 	e := echo.New()
 
 	e.GET("/", func(c echo.Context) error {
-		return c.File("../views/index.html")
+		cookie, err := c.Cookie("session")
+		if err != nil || cookie.Value == "" {
+			return c.Redirect(http.StatusSeeOther, "/register")
+		}
+		return c.File(viewsPath + "index.html")
 	})
-
+	e.GET("/register", func(c echo.Context) error {
+		return c.File(viewsPath + "register.html")
+	})
+	e.GET("/login", func(c echo.Context) error {
+		cookie, err := c.Cookie("session")
+		if err == nil && cookie.Value != "" {
+			return c.Redirect(http.StatusSeeOther, "/")
+		}
+		return c.File(viewsPath + "login.html")
+	})
+	e.POST("/register", func(c echo.Context) error {
+		return auth.RegisterUser(c, db)
+	})
+	e.POST("/login", func(c echo.Context) error {
+		return auth.LoginUser(c, db)
+	})
 	e.GET("/ws", handleConnections)
 
 	go handleMessages()
