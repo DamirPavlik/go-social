@@ -8,6 +8,14 @@
 </head>
 <body>
     <h1>real time chat</h1>
+    <button hx-post="logout" hx-trigger="click" hx-swap="outerHTML">Logout</button>
+    <input type="text" id="search" name="q" placeholder="Search users..."
+        hx-get="/search"
+        hx-trigger="keyup changed delay:300ms"
+        hx-target="#search-results"
+        hx-swap="innerHTML">
+
+    <ul id="search-results"></ul>
     <div id="chat-box"></div>
     
     <form id="chat-form">
