@@ -35,32 +35,33 @@ func RegisterUser(c echo.Context, db *sql.DB) error {
 		Path:  "/",
 	})
 
-	c.Redirect(http.StatusOK, "/")
-	return c.HTML(http.StatusOK, `<div class="success">User registered successfully!</div>`)
+	return c.Redirect(http.StatusSeeOther, "/")
 }
 
 func LoginUser(c echo.Context, db *sql.DB) error {
-	u := new(User)
-	if err := c.Bind(u); err != nil {
-		return err
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+
+	if username == "" || password == "" {
+		return c.HTML(http.StatusBadRequest, `<div class="error">Username and password cannot be empty</div>`)
 	}
 
 	var storedHash string
-	err := db.QueryRow("SELECT password_hash FROM users WHERE username = $1", u.Username).Scan(*&storedHash)
+	err := db.QueryRow("SELECT password_hash FROM users WHERE username = $1", username).Scan(&storedHash)
 
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid username or password"})
+		return c.HTML(http.StatusInternalServerError, `<div class="error">invalid username or password</div>`)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(u.Password)); err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+	if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)); err != nil {
+		return c.HTML(http.StatusInternalServerError, `<div class="error">invalid credentials</div>`)
 	}
 
 	c.SetCookie(&http.Cookie{
 		Name:  "session",
-		Value: u.Username,
+		Value: username,
 		Path:  "/",
 	})
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "user logged in succesfully"})
+	return c.Redirect(http.StatusSeeOther, "/")
 }
