@@ -1,5 +1,74 @@
 package main
 
-func main() {
+import (
+	"fmt"
+	"net/http"
 
+	"github.com/gorilla/websocket"
+	"github.com/labstack/echo/v4"
+)
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+var clients = make(map[*websocket.Conn]bool)
+var broadcast = make(chan string)
+
+func handleConnections(c echo.Context) error {
+	fmt.Println("New WebSocket connection")
+
+	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		fmt.Println("err upgrading: ", err)
+		return err
+	}
+	defer ws.Close()
+
+	clients[ws] = true
+
+	for {
+		_, msg, err := ws.ReadMessage()
+		if err != nil {
+			delete(clients, ws)
+			break
+		}
+
+		broadcast <- string(msg)
+	}
+
+	return nil
+}
+
+func handleMessages() {
+	for {
+		msg := <-broadcast
+		for client := range clients {
+			err := client.WriteMessage(websocket.TextMessage, []byte(msg))
+			if err != nil {
+				client.Close()
+				delete(clients, client)
+			}
+		}
+	}
+}
+
+func main() {
+	e := echo.New()
+
+	e.GET("/", func(c echo.Context) error {
+		return c.File("../views/index.html")
+	})
+
+	e.GET("/ws", handleConnections)
+
+	go handleMessages()
+
+	e.Static("/assets", "../assets")
+	e.GET("/debug", func(c echo.Context) error {
+		return c.String(200, "Static files are served from: assets/")
+	})
+	e.Logger.Fatal(e.Start(":8080"))
 }
