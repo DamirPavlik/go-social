@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat-go-htmx/cmd/auth"
+	"chat-go-htmx/cmd/profile"
 	"chat-go-htmx/cmd/search"
 	"database/sql"
 	"fmt"
@@ -85,6 +86,7 @@ func main() {
 	e := echo.New()
 	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
+	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -106,10 +108,6 @@ func main() {
 		return c.File(viewsPath + "login.html")
 	})
 
-	e.GET("/search", func(c echo.Context) error {
-		return search.SearchUsers(c, db, tmplSearch)
-	})
-
 	e.POST("/register", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
 		if err == nil && cookie.Value != "" {
@@ -124,6 +122,14 @@ func main() {
 
 	e.POST("/logout", func(c echo.Context) error {
 		return auth.LogoutUser(c, tmplAuth)
+	})
+
+	e.GET("/search", func(c echo.Context) error {
+		return search.SearchUsers(c, db, tmplSearch)
+	})
+
+	e.GET("/profile/:id", func(c echo.Context) error {
+		return profile.GetProfile(c, db, tmplProfile)
 	})
 
 	e.GET("/ws", handleConnections)
