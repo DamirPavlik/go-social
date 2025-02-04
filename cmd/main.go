@@ -132,6 +132,14 @@ func main() {
 		return profile.GetProfile(c, db, tmplProfile)
 	})
 
+	e.POST("/profile/:id/add", func(c echo.Context) error {
+		return profile.SendFriendRequest(c, db, tmplProfile)
+	})
+
+	e.POST("/profile/:id/accept", func(c echo.Context) error {
+		return profile.AcceptFriendRequest(c, db, tmplProfile)
+	})
+
 	e.GET("/ws", handleConnections)
 
 	go handleMessages()
