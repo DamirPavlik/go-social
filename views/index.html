@@ -16,6 +16,9 @@
         hx-swap="innerHTML">
 
     <ul id="search-results"></ul>
+    <div hx-get="/friend-requests" hx-target="#friend-requests" hx-trigger="load">
+    </div>
+    <div id="friend-requests"></div>
     <div id="chat-box"></div>
     
     <form id="chat-form">
