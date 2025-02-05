@@ -5,19 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/htmx.org@1.9.5"></script>
-    <title>Document</title>
+    <title>{{ .Username }}'s Profile</title>
 </head>
 <body>
     <h1>{{ .Username }}'s Profile</h1>
     <p>ID: {{ .ID }}</p>
 
-    <form hx-post="/profile/{{ .ID }}/add" hx-trigger="submit" hx-target="#msg" hx-headers='{"X-HX-Request": "true"}'>
-        <button type="submit">Add Friend</button>
-    </form>
-    <div id="msg"></div>
+    <div id="friend-status">
+        {{ if eq .Friendship "friends" }}
+            <p>You are already friends</p>
+        {{ else if eq .Friendship "pending" }}
+            <p>Pending</p>
+        {{ else if eq .Friendship "declined" }}
+            <p>This request was already declined. Would you like to send another request?</p>
+            <form hx-post="/profile/{{ .ID }}/add-after-decline" hx-trigger="submit" hx-target="#friend-status" hx-headers='{"X-HX-Request": "true"}'>
+                <button type="submit">Add Friend</button>
+            </form>
+        {{ else }}
+            <form hx-post="/profile/{{ .ID }}/add" hx-trigger="submit" hx-target="#friend-status" hx-headers='{"X-HX-Request": "true"}'>
+                <button type="submit">Add Friend</button>
+            </form>
+        {{ end }}
+    </div>
 </body>
 </html>
-
 {{ end }}
 
 {{ define "error" }}
