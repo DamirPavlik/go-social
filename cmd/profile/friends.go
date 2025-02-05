@@ -61,6 +61,25 @@ func AcceptFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) er
 	return render.RenderTemplate(c, tmpl, "success", "friend request accepted")
 }
 
+func DeclineFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	recieverId, _ := GetCurrentUser(c, db)
+	if recieverId == 0 {
+		return render.RenderTemplate(c, tmpl, "error", "invalid sender id")
+	}
+
+	senderId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return render.RenderTemplate(c, tmpl, "error", "invalid reciever id")
+	}
+
+	_, err = db.Exec(`UPDATE friend_request SET status = 'declined' WHERE sender_id = $1 AND reciever_id = $2`, senderId, recieverId)
+	if err != nil {
+		return render.RenderTemplate(c, tmpl, "error", "err updating the friend req status")
+	}
+
+	return render.RenderTemplate(c, tmpl, "success", "friend request declined")
+}
+
 func GetAllFriendRequests(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	currentUserId, _ := GetCurrentUser(c, db)
 
