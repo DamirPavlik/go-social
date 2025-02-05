@@ -1,0 +1,29 @@
+{{ define "profile" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <title>Document</title>
+</head>
+<body>
+    <h1>{{ .Username }}'s Profile</h1>
+    <p>ID: {{ .ID }}</p>
+
+    <form hx-post="/profile/{{ .ID }}/add" hx-trigger="submit" hx-target="#msg" hx-headers='{"X-HX-Request": "true"}'>
+        <button type="submit">Add Friend</button>
+    </form>
+    <div id="msg"></div>
+</body>
+</html>
+
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
+
+{{ define "success" }}
+    <div class="success">{{ . }}</div>
+{{ end }}
