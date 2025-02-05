@@ -87,6 +87,7 @@ func main() {
 	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
 	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
+	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -136,8 +137,12 @@ func main() {
 		return profile.SendFriendRequest(c, db, tmplProfile)
 	})
 
-	e.POST("/profile/:id/accept", func(c echo.Context) error {
+	e.POST("/accept/:id", func(c echo.Context) error {
 		return profile.AcceptFriendRequest(c, db, tmplProfile)
+	})
+
+	e.GET("/friend-requests", func(c echo.Context) error {
+		return profile.GetAllFriendRequests(c, db, tmplFriendRequests)
 	})
 
 	e.GET("/ws", handleConnections)
