@@ -1,1 +1,1 @@
-# chat-go-htmx
+# chat-go-htmx (WIP)
