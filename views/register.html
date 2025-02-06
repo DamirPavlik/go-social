@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/styles/index.css">
+    <link rel="stylesheet" href="../assets/styles/auth.css">
+    <title>Register</title>
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+</head>
+<body class="auth">
+    <div class="auth-popup">
+        <h1 class="main-heading">Register</h1>
+        <div id="response-message"></div>
+
+        <form id="register-form" hx-post="/register" hx-target="#response-message" hx-swap="innerHTML">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+
+        <div id="response-message"></div>
+
+        <h5 class="account">Already have an account? <a href="/login">Login</a></h5>
+    </div>
+</body>
+</html>
