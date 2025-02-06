@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat-go-htmx/cmd/auth"
+	"chat-go-htmx/cmd/chat"
 	"chat-go-htmx/cmd/profile"
 	"chat-go-htmx/cmd/search"
 	"database/sql"
@@ -35,10 +36,14 @@ func main() {
 	initDB(dbURL)
 
 	e := echo.New()
+
+	chatManager := chat.NewChatManager(db)
+
 	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
 	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
 	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
+	tmplFriends := template.Must(template.ParseFiles(viewsPath + "templates/friends.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -103,6 +108,16 @@ func main() {
 	e.GET("/friend-requests", func(c echo.Context) error {
 		return profile.GetAllFriendRequests(c, db, tmplFriendRequests)
 	})
+
+	e.GET("/friends", func(c echo.Context) error {
+		return profile.GetAllFriends(c, db, tmplFriends)
+	})
+
+	e.GET("/chat/:id", func(c echo.Context) error {
+		return chatManager.HandleChat(c)
+	})
+
+	go chatManager.HandleMessage()
 
 	e.Static("/assets", "../assets")
 	e.Logger.Fatal(e.Start(":8080"))
