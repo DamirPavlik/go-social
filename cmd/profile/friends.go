@@ -37,6 +37,36 @@ func SendFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) erro
 	return render.RenderTemplate(c, tmpl, "success", "friend reqest sent")
 }
 
+func SendFriendRequestAfterDelcine(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	senderId, _ := GetCurrentUser(c, db)
+	if senderId == 0 {
+		return render.RenderTemplate(c, tmpl, "error", "invalid sender id")
+	}
+
+	recieverId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return render.RenderTemplate(c, tmpl, "error", "invalid reciever id")
+	}
+
+	if senderId == recieverId {
+		log.Println("retard: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "are you dumb you can't send req to yourself")
+	}
+	_, err = db.Exec("DELETE FROM friend_request WHERE (sender_id = $1 AND reciever_id = $2) OR (sender_id = $2 AND reciever_id = $1)", senderId, recieverId)
+	if err != nil {
+		log.Println("Error deleting friend request:", err)
+		return render.RenderTemplate(c, tmpl, "error", "error deleting the old request")
+	}
+
+	_, err = db.Exec("INSERT INTO friend_request (sender_id, reciever_id, status) VALUES ($1, $2, 'pending') ON CONFLICT DO NOTHING", senderId, recieverId)
+	if err != nil {
+		log.Println("err sending friend request: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "db err")
+	}
+
+	return render.RenderTemplate(c, tmpl, "success", "friend reqest sent")
+}
+
 func AcceptFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	recieverId, _ := GetCurrentUser(c, db)
 	if recieverId == 0 {
@@ -78,6 +108,51 @@ func DeclineFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) e
 	}
 
 	return render.RenderTemplate(c, tmpl, "success", "friend request declined")
+}
+
+func GetAllFriends(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	currentUserId, _ := GetCurrentUser(c, db)
+	friends := []struct {
+		ID       int
+		Username string
+	}{}
+
+	rows, err := db.Query(`
+		SELECT u.id, u.username
+		FROM friends f
+		JOIN users u ON
+			(f.user1 = $1 AND f.user2 = u.id) OR
+			(f.user2 = $1 AND f.user1 = u.id)
+	`, currentUserId)
+	if err != nil {
+		err = render.RenderTemplate(c, tmpl, "error", "db err")
+		if err != nil {
+			return c.String(http.StatusInternalServerError, fmt.Sprintf("Template error: %v", err))
+		}
+		return nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var friend struct {
+			ID       int
+			Username string
+		}
+		if err := rows.Scan(&friend.ID, &friend.Username); err != nil {
+			return render.RenderTemplate(c, tmpl, "error", "err scanning")
+		}
+		friends = append(friends, friend)
+	}
+
+	if err := rows.Err(); err != nil {
+		return render.RenderTemplate(c, tmpl, "error", "err rows")
+	}
+
+	err = render.RenderTemplate(c, tmpl, "friends", friends)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Template error: %v", err))
+	}
+	return nil
 }
 
 func GetAllFriendRequests(c echo.Context, db *sql.DB, tmpl *template.Template) error {
