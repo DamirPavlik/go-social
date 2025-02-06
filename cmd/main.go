@@ -85,6 +85,14 @@ func main() {
 		return search.SearchUsers(c, db, tmplSearch)
 	})
 
+	e.GET("/user-username/:id", func(c echo.Context) error {
+		return profile.GetUsernameById(c, db)
+	})
+
+	e.GET("/current-user-id", func(c echo.Context) error {
+		return profile.GetCurrentUserIdJSON(c, db)
+	})
+
 	e.GET("/profile/:id", func(c echo.Context) error {
 		return profile.GetProfile(c, db, tmplProfile)
 	})
