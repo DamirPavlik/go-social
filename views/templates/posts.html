@@ -18,6 +18,10 @@ posts:
     {{end}}
 {{ end }}
 
+{{ define "redirect" }}
+    <script>window.location.href = "{{ . }}";</script>
+{{ end }}
+
 {{ define "error" }}
     <div class="error">{{ . }}</div>
 {{ end }}
