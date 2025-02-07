@@ -33,6 +33,10 @@
             </form>
         {{ end }}
     </div>
+
+    <div hx-get="/profile/{{ .ID }}/posts" hx-target="#posts" hx-trigger="load">
+    </div>
+    <div id="posts"></div>
 <script src="../../assets/scripts/chat.js"></script>
 </body>
 </html>
