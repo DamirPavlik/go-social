@@ -27,6 +27,11 @@ func initDB(dbUrl string) {
 	}
 }
 
+func serveAssets(e *echo.Echo) {
+	e.Static("/assets", "../assets")
+	e.Static("/profile_pictures", "../uploads/profile_pictures")
+}
+
 func main() {
 	godotenv.Load("../.env")
 	dbURL := os.Getenv("DB_URL")
@@ -126,7 +131,7 @@ func main() {
 	})
 
 	go chatManager.HandleMessage()
+	serveAssets(e)
 
-	e.Static("/assets", "../assets")
 	e.Logger.Fatal(e.Start(":8080"))
 }
