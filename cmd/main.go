@@ -3,6 +3,7 @@ package main
 import (
 	"chat-go-htmx/cmd/auth"
 	"chat-go-htmx/cmd/chat"
+	"chat-go-htmx/cmd/posts"
 	"chat-go-htmx/cmd/profile"
 	"chat-go-htmx/cmd/search"
 	"database/sql"
@@ -30,6 +31,7 @@ func initDB(dbUrl string) {
 func serveAssets(e *echo.Echo) {
 	e.Static("/assets", "../assets")
 	e.Static("/profile_pictures", "../uploads/profile_pictures")
+	e.Static("/uploads/posts", "../uploads/posts")
 }
 
 func main() {
@@ -49,6 +51,7 @@ func main() {
 	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
 	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
 	tmplFriends := template.Must(template.ParseFiles(viewsPath + "templates/friends.html"))
+	tmplPosts := template.Must(template.ParseFiles(viewsPath + "templates/posts.html"))
 
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
@@ -128,6 +131,14 @@ func main() {
 
 	e.GET("/chat/:id", func(c echo.Context) error {
 		return chatManager.HandleChat(c)
+	})
+
+	e.POST("/post", func(c echo.Context) error {
+		return posts.CreatePost(c, db, tmplPosts)
+	})
+
+	e.GET("/profile/:id/posts", func(c echo.Context) error {
+		return posts.GetUserPosts(c, db, tmplPosts)
 	})
 
 	go chatManager.HandleMessage()
