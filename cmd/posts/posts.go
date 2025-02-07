@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -56,8 +57,32 @@ func CreatePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	_, err = db.Exec("INSERT INTO posts(user_id, content, iamge, created_at) VALUES ($1, $2, $3, $4)", userID, content, imagePath, time.Now())
 
 	if err != nil {
+		log.Println("error inserting", err)
 		return render.RenderTemplate(c, tmpl, "error", "error creating post")
 	}
 
 	return render.RenderTemplate(c, tmpl, "success", "post created")
+}
+
+func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userId := c.Param("id")
+
+	rows, err := db.Query("SELECT id, content, image, created_at FROM posts WHERE user_Id = $1 ORDER BY created_at DESC", userId)
+	if err != nil {
+		log.Println("error fetching posts: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "failed to get posts")
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.Content, &post.Image, &post.CreatedAt)
+		if err != nil {
+			return render.RenderTemplate(c, tmpl, "error", "err reading posts")
+		}
+		posts = append(posts, post)
+	}
+
+	return render.RenderTemplate(c, tmpl, "user_posts", posts)
 }
