@@ -1,25 +1,47 @@
 {{ define "user_posts" }}
 posts: 
     {{ range . }}
-    <div class="post">
-        <p>{{.Content}}</p>
-        {{if .Image}} <img src="{{.Image}}" alt="Post Image"> {{end}}
-        <button hx-post="/post/{{ .ID }}/like" hx-swap="outerHTML">Like</button>
-        <form hx-post="/post/{{ .ID }}/comment" hx-target="#comments-{{.ID}}" hx-swap="beforeend">
+    <div class="post" style="border: 1px solid red;">
+        <p>{{ .Content }}</p>
+
+        {{ if .Image }}
+            <img src="{{ .Image }}" alt="Post Image">
+        {{ end }}
+
+        <div class="post-actions">
+            <button 
+                hx-post="/post/{{ .ID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
+                hx-swap="outerHTML"
+                hx-target="this">
+                {{ if .LikedByUser }}Unlike{{ else }}Like{{ end }}
+            </button>
+            <span>{{ .LikesCount }} Likes</span>
+        </div>
+
+        <form 
+            hx-post="/post/{{ .ID }}/comment" 
+            hx-target="#comments-{{ .ID }}" 
+            hx-swap="beforeend">
             <input type="text" name="content" placeholder="Comment" required>
             <button type="submit">Comment</button>
         </form>
-        <div id="comments-{{.ID}}">
-            {{range .Comments}}
-            <p>{{.Content}}</p>
-            {{end}}
+
+        <div id="comments-{{ .ID }}">
+            {{ range .Comments }}
+                <p>{{ .UserID }}: {{ .Content }}</p>
+            {{ end }}
         </div>
+
     </div>
-    {{end}}
+    {{ end }}
 {{ end }}
 
-{{ define "redirect" }}
-    <script>window.location.href = "{{ . }}";</script>
+{{ define "single_comment" }}
+    <p>{{ .Content }}</p>
+{{ end }}
+
+{{ define "reload" }}
+    <script>window.location.reload();</script>
 {{ end }}
 
 {{ define "error" }}
