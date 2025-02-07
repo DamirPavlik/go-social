@@ -143,20 +143,28 @@ func GetCommentsForPost(db *sql.DB, postID int) ([]Comment, error) {
 }
 
 func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
-	userId := c.Get("userID").(int)
+	userId, _ := profile.GetCurrentUser(c, db)
 	postId := c.Param("id")
 	content := c.FormValue("content")
 
 	if content == "" {
-		return render.RenderTemplate(c, tmpl, "error", "content can not be empty")
+		return render.RenderTemplate(c, tmpl, "error", "Content cannot be empty")
 	}
 
-	_, err := db.Exec("INSERT INTO comments(post_id, user_id, content, created_at) VALUES ($1, $2, $3, $4)", postId, userId, content, time.Now())
+	_, err := db.Exec("INSERT INTO comments (post_id, user_id, content, created_at) VALUES ($1, $2, $3, $4)", postId, userId, content, time.Now())
 	if err != nil {
-		log.Println("err adding comm: ", err)
-		return render.RenderTemplate(c, tmpl, "error", "error adding comment")
+		log.Println("Error adding comment: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "Error adding comment")
 	}
-	return render.RenderTemplate(c, tmpl, "redirect", "/profile")
+
+	var newComment Comment
+	err = db.QueryRow("SELECT content FROM comments WHERE post_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT 1", postId, userId).Scan(&newComment.Content)
+	if err != nil {
+		log.Println("Error fetching new comment: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "Error fetching new comment")
+	}
+
+	return render.RenderTemplate(c, tmpl, "single_comment", newComment)
 }
 
 func LikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -169,7 +177,7 @@ func LikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 		return render.RenderTemplate(c, tmpl, "error", "error liking post")
 	}
 
-	return render.RenderTemplate(c, tmpl, "success", "Liked")
+	return render.RenderTemplate(c, tmpl, "reload", "")
 }
 
 func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -182,5 +190,5 @@ func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 		return render.RenderTemplate(c, tmpl, "error", "error unliking post")
 	}
 
-	return render.RenderTemplate(c, tmpl, "success", "Unliked")
+	return render.RenderTemplate(c, tmpl, "reload", "")
 }
