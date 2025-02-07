@@ -147,3 +147,29 @@ func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	}
 	return render.RenderTemplate(c, tmpl, "redirect", "/profile")
 }
+
+func LikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userID, _ := profile.GetCurrentUser(c, db)
+	postID := c.Param("id")
+
+	_, err := db.Exec("INSERT INTO likes (post_id, user_id, created_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", postID, userID, time.Now())
+	if err != nil {
+		log.Println("err liking post: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "error liking post")
+	}
+
+	return render.RenderTemplate(c, tmpl, "success", "Liked")
+}
+
+func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userID, _ := profile.GetCurrentUser(c, db)
+	postID := c.Param("id")
+
+	_, err := db.Exec("DELETE FROM likes WHERE post_id = $1 AND user_id = $2", postID, userID)
+	if err != nil {
+		log.Println("err unliking post: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "error unliking post")
+	}
+
+	return render.RenderTemplate(c, tmpl, "success", "Unliked")
+}
