@@ -14,6 +14,12 @@
     <div id="friend-status">
         {{ if eq .Friendship "friends" }}
             <p>You are already friends</p>
+            <button id="openChat" hx-on:click="openChat({{ .ID }})">Chat</button>
+            <div id="chatWindow" style="display: none;">
+                <div id="chatMessages"></div>
+                <input type="text" id="chatInput" placeholder="Type a message...">
+                <button hx-on:click="sendMessage({{ .ID }})">Send</button>
+            </div>
         {{ else if eq .Friendship "pending" }}
             <p>Pending</p>
         {{ else if eq .Friendship "declined" }}
@@ -27,6 +33,7 @@
             </form>
         {{ end }}
     </div>
+<script src="../../assets/scripts/chat.js"></script>
 </body>
 </html>
 {{ end }}
