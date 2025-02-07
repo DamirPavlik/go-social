@@ -1,0 +1,27 @@
+{{ define "user_posts" }}
+posts: 
+    {{ range . }}
+    <div class="post">
+        <p>{{.Content}}</p>
+        {{if .Image}} <img src="{{.Image}}" alt="Post Image"> {{end}}
+        <button hx-post="/post/{{ .ID }}/like" hx-swap="outerHTML">Like</button>
+        <form hx-post="/post/{{ .ID }}/comment" hx-target="#comments-{{.ID}}" hx-swap="beforeend">
+            <input type="text" name="content" placeholder="Comment" required>
+            <button type="submit">Comment</button>
+        </form>
+        <div id="comments-{{.ID}}">
+            {{range .Comments}}
+            <p>{{.Content}}</p>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
+
+{{ define "success" }}
+    <div class="success">{{ . }}</div>
+{{ end }}
