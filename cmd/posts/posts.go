@@ -25,12 +25,14 @@ type Comment struct {
 }
 
 type Post struct {
-	ID        int
-	UserID    int
-	Content   string
-	Image     string
-	CreatedAt time.Time
-	Comments  []Comment
+	ID          int
+	UserID      int
+	Content     string
+	Image       string
+	CreatedAt   time.Time
+	Comments    []Comment
+	LikesCount  int
+	LikedByUser bool
 }
 
 func CreatePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -75,10 +77,19 @@ func CreatePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 }
 
 func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
-	userId := c.Param("id")
-	log.Println("user id: ", userId)
+	userID, _ := profile.GetCurrentUser(c, db)
+	profileUserID := c.Param("id")
 
-	rows, err := db.Query("SELECT id, content, image, created_at FROM posts WHERE user_id = $1 ORDER BY created_at DESC", userId)
+	rows, err := db.Query(`
+		SELECT 
+			p.id, p.content, p.image, p.created_at,
+			COALESCE((SELECT COUNT(*) FROM likes WHERE post_id = p.id), 0) AS likes_count,
+			EXISTS (SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) AS liked_by_user
+		FROM posts p
+		WHERE p.user_id = $2
+		ORDER BY p.created_at DESC
+	`, userID, profileUserID)
+
 	if err != nil {
 		log.Println("error fetching posts: ", err)
 		return render.RenderTemplate(c, tmpl, "error", "failed to get posts")
@@ -88,10 +99,10 @@ func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		err := rows.Scan(&post.ID, &post.Content, &post.Image, &post.CreatedAt)
+		err := rows.Scan(&post.ID, &post.Content, &post.Image, &post.CreatedAt, &post.LikesCount, &post.LikedByUser)
 		if err != nil {
-			log.Println("err reading posts: ", err)
-			return render.RenderTemplate(c, tmpl, "error", "err reading posts")
+			log.Println("error reading posts: ", err)
+			return render.RenderTemplate(c, tmpl, "error", "error reading posts")
 		}
 
 		comments, err := GetCommentsForPost(db, post.ID)
