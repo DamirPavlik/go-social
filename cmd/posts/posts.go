@@ -130,3 +130,20 @@ func GetCommentsForPost(db *sql.DB, postID int) ([]Comment, error) {
 	}
 	return comments, nil
 }
+
+func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userId := c.Get("userID").(int)
+	postId := c.Param("id")
+	content := c.FormValue("content")
+
+	if content == "" {
+		return render.RenderTemplate(c, tmpl, "error", "content can not be empty")
+	}
+
+	_, err := db.Exec("INSERT INTO comments(post_id, user_id, content, created_at) VALUES ($1, $2, $3, $4)", postId, userId, content, time.Now())
+	if err != nil {
+		log.Println("err adding comm: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "error adding comment")
+	}
+	return render.RenderTemplate(c, tmpl, "redirect", "/profile")
+}
