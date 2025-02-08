@@ -1,33 +1,36 @@
-const ws = new WebSocket("ws://localhost:8080/ws");
+const buttonSearch = document.querySelector(".btn.btn-search");
+const buttonFriendRequests = document.querySelector(".btn.btn-friend-requests");
 
-ws.onopen = function() {
-    console.log("Connected to WebSocket");
-};
+const searchPopup = document.querySelector(".search-overlay");
+const friendRequestsPopup = document.querySelector(".friend-requests-overlay");
 
-ws.onmessage = function(event) {
-    console.log("Message received:", event.data);
-    let chatBox = document.getElementById("chat-box");
-    let messageDiv = document.createElement("div");
-    messageDiv.textContent = event.data;
-    chatBox.appendChild(messageDiv);
-};
+const searchCloseButton = document.querySelector(".search-overlay .close-btn");
+const friendRequestsCloseButton = document.querySelector(".friend-requests-overlay .close-btn");
 
-ws.onerror = function(error) {
-    console.error("WebSocket error:", error);
-};
+buttonFriendRequests.addEventListener("click", function() {
+    friendRequestsPopup.style.display = "flex";
+});
 
-ws.onclose = function() {
-    console.warn("WebSocket closed");
-};
+buttonSearch.addEventListener("click", function() {
+    searchPopup.style.display = "flex";
+});
 
-document.getElementById("chat-form").addEventListener("submit", function(event) {
-    event.preventDefault();
-    let input = document.getElementById("message");
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(input.value);
-        console.log("Message sent:", input.value);
-    } else {
-        console.warn("WebSocket is not open");
+searchCloseButton.addEventListener("click", function() {
+    searchPopup.style.display = "none";
+});
+
+friendRequestsCloseButton.addEventListener("click", function() {
+    friendRequestsPopup.style.display = "none";
+});
+
+searchPopup.addEventListener("click", function(event) {
+    if (event.target === searchPopup) {
+        searchPopup.style.display = "none";
     }
-    input.value = "";
+});
+
+friendRequestsPopup.addEventListener("click", function(event) {
+    if (event.target === friendRequestsPopup) {
+        friendRequestsPopup.style.display = "none";
+    }
 });
