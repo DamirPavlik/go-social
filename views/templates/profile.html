@@ -8,6 +8,7 @@
     <title>{{ .Username }}'s Profile</title>
 </head>
 <body>
+    <img src="/profile_pictures/{{ .ProfilePicture }}" alt="">
     <h1>{{ .Username }}'s Profile</h1>
     <p>ID: {{ .ID }}</p>
 
@@ -37,7 +38,9 @@
     <div hx-get="/profile/{{ .ID }}/posts" hx-target="#posts" hx-trigger="load">
     </div>
     <div id="posts"></div>
-<script src="../../assets/scripts/chat.js"></script>
+<script src="../../assets/scripts/utils.js"></script>
+<script src="../../assets/scripts/posts.js?v=0.1"></script>
+<script src="../../assets/scripts/chat.js?v=0.1"></script>
 </body>
 </html>
 {{ end }}

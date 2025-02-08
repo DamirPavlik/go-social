@@ -173,11 +173,26 @@ func LikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 
 	_, err := db.Exec("INSERT INTO likes (post_id, user_id, created_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", postID, userID, time.Now())
 	if err != nil {
-		log.Println("err liking post: ", err)
-		return render.RenderTemplate(c, tmpl, "error", "error liking post")
+		log.Println("Error liking post:", err)
+		return render.RenderTemplate(c, tmpl, "error", "Error liking post")
 	}
 
-	return render.RenderTemplate(c, tmpl, "reload", "")
+	var likesCount int
+	var likedByUser bool
+	db.QueryRow("SELECT COUNT(*) FROM likes WHERE post_id = $1", postID).Scan(&likesCount)
+	db.QueryRow("SELECT EXISTS(SELECT 1 FROM likes WHERE post_id = $1 AND user_id = $2)", postID, userID).Scan(&likedByUser)
+
+	data := struct {
+		ID          string
+		LikedByUser bool
+		LikesCount  int
+	}{
+		ID:          postID,
+		LikedByUser: likedByUser,
+		LikesCount:  likesCount,
+	}
+
+	return render.RenderTemplate(c, tmpl, "post-actions", data)
 }
 
 func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -186,9 +201,24 @@ func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 
 	_, err := db.Exec("DELETE FROM likes WHERE post_id = $1 AND user_id = $2", postID, userID)
 	if err != nil {
-		log.Println("err unliking post: ", err)
-		return render.RenderTemplate(c, tmpl, "error", "error unliking post")
+		log.Println("Error unliking post:", err)
+		return render.RenderTemplate(c, tmpl, "error", "Error unliking post")
 	}
 
-	return render.RenderTemplate(c, tmpl, "reload", "")
+	var likesCount int
+	var likedByUser bool
+	db.QueryRow("SELECT COUNT(*) FROM likes WHERE post_id = $1", postID).Scan(&likesCount)
+	db.QueryRow("SELECT EXISTS(SELECT 1 FROM likes WHERE post_id = $1 AND user_id = $2)", postID, userID).Scan(&likedByUser)
+
+	data := struct {
+		ID          string
+		LikedByUser bool
+		LikesCount  int
+	}{
+		ID:          postID,
+		LikedByUser: likedByUser,
+		LikesCount:  likesCount,
+	}
+
+	return render.RenderTemplate(c, tmpl, "post-actions", data)
 }
