@@ -3,28 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTMX Chat</title>
+    <link rel="stylesheet" href="../assets/styles/index.css?v=0.1">
+    <link rel="stylesheet" href="../assets/styles/main.css?v=0.5">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Social Network</title>
     <script src="https://unpkg.com/htmx.org@1.9.5"></script>
 </head>
-<body>
-    <h1>real time chat</h1>
-    <button hx-post="logout" hx-trigger="click" hx-swap="outerHTML">Logout</button>
+<body class="main">
+    <header class="mb-5">
+        <nav class="d-flex align-items-center justify-content-between navigation">
+            <h3 class="mt-2 fw-normal"><span class="fw-bolder">Social</span>Network</h3>
+            <div class="btn-container">
+                <button class="btn">
+                    <a href="/my-profile">
+                        <img src="../assets/images/profile-user (1).png" alt="" class="icon">
+                        <span class="tooltip">My Profile</span>
+                    </a>
+                </button>
+                <button class="btn btn-search">
+                    <img src="../assets/images/search (1).png" alt="" class="icon">
+                    <span class="tooltip">Search</span>
+                </button>
+                <button class="btn btn-friend-requests">
+                    <img src="../assets/images/add-friend (1).png" alt="" class="icon">
+                    <span class="tooltip">Friend Requests</span>
+                </button>
+                <button class="btn btn-logout" hx-post="logout" hx-trigger="click" hx-swap="outerHTML">
+                    <img src="../assets/images/logout (1).png" alt="" class="icon">
+                    <span class="tooltip">Logout</span>
+                </button>
+            </div>
+        </nav>  
+    </header>
+    <div class="container">
+        <form id="post-form" hx-post="/post" hx-target="#posts-response" hx-swap="beforeend" enctype="multipart/form-data">
+            <textarea name="content" placeholder="Write a post..." required></textarea>
+            <button type="submit">Post</button>
+        </form>
+        <div id="posts-response"></div>
 
-    <input type="text" id="search" name="q" placeholder="Search users..." hx-get="/search" hx-trigger="keyup changed delay:300ms" hx-target="#search-results" hx-swap="innerHTML">
-    <ul id="search-results"></ul>
 
-    <a href="/my-profile">My Profile</a>
-    
-    <div hx-get="/friend-requests" hx-target="#friend-requests" hx-trigger="load"></div>
-    <div id="friend-requests"></div>
+        <div class="feed-wrapper">
+            <div hx-get="/friends-feed" hx-trigger="load" hx-target="#posts" hx-swap="innerHTML"></div>
+            <div id="posts"></div>
+        </div>
+    </div>
 
-    <form id="post-form" hx-post="/post" hx-target="#posts" hx-swap="beforeend" enctype="multipart/form-data">
-        <textarea name="content" placeholder="Write a post..." required></textarea>
-        <input type="file" name="image">
-        <button type="submit">Post</button>
-    </form>
-    <div id="posts"></div>
+    <div class="friend-requests-overlay">
+        <div class="friend-request-box">
+            <button class="close-btn">&times;</button>
+            <h5>Friend Requests</h5>
+            <div hx-get="/friend-requests" hx-target="#friend-requests" hx-trigger="load"></div>
+            <div id="friend-requests"></div>
+        </div>
+    </div>
 
-<script src="/assets/scripts/index.js?v=0.1"></script>
+    <div class="search-overlay">
+        <div class="search-box">
+            <button class="close-btn">&times;</button>
+            <h3 class="mb-4 text-center">Search Users</h3>
+            <input type="text" class="search-input" id="search" name="q" placeholder="Search users..." hx-get="/search" hx-trigger="keyup changed delay:300ms" hx-target="#search-results" hx-swap="innerHTML">
+            <ul id="search-results"></ul>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+<script src="../assets/scripts/index.js?v=0.3"></script>
 </body>
 </html>
