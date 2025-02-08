@@ -9,15 +9,13 @@
 <body>
     <h1>real time chat</h1>
     <button hx-post="logout" hx-trigger="click" hx-swap="outerHTML">Logout</button>
-    <input type="text" id="search" name="q" placeholder="Search users..."
-        hx-get="/search"
-        hx-trigger="keyup changed delay:300ms"
-        hx-target="#search-results"
-        hx-swap="innerHTML">
 
+    <input type="text" id="search" name="q" placeholder="Search users..." hx-get="/search" hx-trigger="keyup changed delay:300ms" hx-target="#search-results" hx-swap="innerHTML">
     <ul id="search-results"></ul>
-    <div hx-get="/friend-requests" hx-target="#friend-requests" hx-trigger="load">
-    </div>
+
+    <a href="/my-profile">My Profile</a>
+    
+    <div hx-get="/friend-requests" hx-target="#friend-requests" hx-trigger="load"></div>
     <div id="friend-requests"></div>
 
     <form id="post-form" hx-post="/post" hx-target="#posts" hx-swap="beforeend" enctype="multipart/form-data">
