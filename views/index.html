@@ -20,15 +20,12 @@
     </div>
     <div id="friend-requests"></div>
 
-    <div hx-get="/friends" hx-target="#friends" hx-trigger="load">
-    </div>
-    <div id="friends"></div>
-    <div id="chat-box"></div>
-    
-    <form id="chat-form">
-        <input type="text" id="message" placeholder="Type a message..." autocomplete="off">
-        <button type="submit">Send</button>
+    <form id="post-form" hx-post="/post" hx-target="#posts" hx-swap="beforeend" enctype="multipart/form-data">
+        <textarea name="content" placeholder="Write a post..." required></textarea>
+        <input type="file" name="image">
+        <button type="submit">Post</button>
     </form>
+    <div id="posts"></div>
 
 <script src="/assets/scripts/index.js?v=0.1"></script>
 </body>
