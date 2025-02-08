@@ -7,16 +7,8 @@ posts:
         {{ if .Image }}
             <img src="{{ .Image }}" alt="Post Image">
         {{ end }}
-
-        <div class="post-actions">
-            <button 
-                hx-post="/post/{{ .ID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
-                hx-swap="outerHTML"
-                hx-target="this">
-                {{ if .LikedByUser }}Unlike{{ else }}Like{{ end }}
-            </button>
-            <span>{{ .LikesCount }} Likes</span>
-        </div>
+        
+        {{ template "post-actions" . }}
 
         <form 
             hx-post="/post/{{ .ID }}/comment" 
@@ -28,7 +20,7 @@ posts:
 
         <div id="comments-{{ .ID }}">
             {{ range .Comments }}
-                <p>{{ .UserID }}: {{ .Content }}</p>
+                <p><span class="comment-user-id">{{ .UserID }}</span>: {{ .Content }}</p>
             {{ end }}
         </div>
 
@@ -36,8 +28,32 @@ posts:
     {{ end }}
 {{ end }}
 
+{{ define "post-actions" }}
+<div class="post-actions" id="post-actions-{{ .ID }}">
+    <button 
+        hx-post="/post/{{ .ID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
+        hx-swap="outerHTML"
+        hx-target="#post-actions-{{ .ID }}">
+        {{ if .LikedByUser }}Unlike{{ else }}Like{{ end }}
+    </button>
+    <span>{{ .LikesCount }} Likes</span>
+</div>
+{{ end }}
+
 {{ define "single_comment" }}
     <p>{{ .Content }}</p>
+{{ end }}
+
+{{ define "like_button" }}
+<div class="post-actions">
+    <button 
+        hx-post="/post/{{ .PostID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
+        hx-swap="outerHTML"
+        hx-target="this">
+        {{ if .LikedByUser }}Unlike{{ else }}Like{{ end }}
+    </button>
+    <span>{{ .LikesCount }} Likes</span>
+</div>
 {{ end }}
 
 {{ define "reload" }}
