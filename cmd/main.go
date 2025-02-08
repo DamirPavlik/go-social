@@ -141,6 +141,18 @@ func main() {
 		return posts.GetUserPosts(c, db, tmplPosts)
 	})
 
+	e.POST("/post/:id/like", func(c echo.Context) error {
+		return posts.LikePost(c, db, tmplPosts)
+	})
+
+	e.POST("/post/:id/unlike", func(c echo.Context) error {
+		return posts.UnlikePost(c, db, tmplPosts)
+	})
+
+	e.POST("/post/:id/comment", func(c echo.Context) error {
+		return posts.CommentOnPost(c, db, tmplPosts)
+	})
+
 	go chatManager.HandleMessage()
 	serveAssets(e)
 
