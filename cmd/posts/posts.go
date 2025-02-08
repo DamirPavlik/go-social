@@ -20,6 +20,7 @@ type Comment struct {
 	ID        int
 	PostID    int
 	UserID    int
+	Username  string
 	Content   string
 	CreatedAt time.Time
 }
@@ -124,7 +125,13 @@ func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 }
 
 func GetCommentsForPost(db *sql.DB, postID int) ([]Comment, error) {
-	rows, err := db.Query("SELECT id, post_id, user_id, content, created_at FROM comments WHERE post_id = $1 ORDER BY created_at ASC", postID)
+	rows, err := db.Query(`
+        SELECT c.id, c.user_id, u.username, c.content 
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.post_id = $1
+        ORDER BY c.created_at ASC
+    `, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,17 +140,17 @@ func GetCommentsForPost(db *sql.DB, postID int) ([]Comment, error) {
 	var comments []Comment
 	for rows.Next() {
 		var comment Comment
-		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt)
-		if err != nil {
+		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Username, &comment.Content); err != nil {
 			return nil, err
 		}
 		comments = append(comments, comment)
 	}
+
 	return comments, nil
 }
 
 func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
-	userId, _ := profile.GetCurrentUser(c, db)
+	userId, username := profile.GetCurrentUser(c, db) // Get UserID + Username
 	postId := c.Param("id")
 	content := c.FormValue("content")
 
@@ -157,11 +164,12 @@ func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 		return render.RenderTemplate(c, tmpl, "error", "Error adding comment")
 	}
 
-	var newComment Comment
-	err = db.QueryRow("SELECT content FROM comments WHERE post_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT 1", postId, userId).Scan(&newComment.Content)
-	if err != nil {
-		log.Println("Error fetching new comment: ", err)
-		return render.RenderTemplate(c, tmpl, "error", "Error fetching new comment")
+	newComment := struct {
+		Username string
+		Content  string
+	}{
+		Username: username,
+		Content:  content,
 	}
 
 	return render.RenderTemplate(c, tmpl, "single_comment", newComment)
