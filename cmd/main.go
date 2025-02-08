@@ -49,6 +49,7 @@ func main() {
 	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
 	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
+	tmplMyProfile := template.Must(template.ParseFiles(viewsPath + "my_profile.html"))
 	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
 	tmplFriends := template.Must(template.ParseFiles(viewsPath + "templates/friends.html"))
 	tmplPosts := template.Must(template.ParseFiles(viewsPath + "templates/posts.html"))
@@ -151,6 +152,10 @@ func main() {
 
 	e.POST("/post/:id/comment", func(c echo.Context) error {
 		return posts.CommentOnPost(c, db, tmplPosts)
+	})
+
+	e.GET("/my-profile", func(c echo.Context) error {
+		return profile.GetMyProfile(c, db, tmplMyProfile)
 	})
 
 	go chatManager.HandleMessage()
