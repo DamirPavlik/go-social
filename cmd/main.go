@@ -171,6 +171,10 @@ func main() {
 		return posts.GetFriendsPosts(c, db, tmplFeed)
 	})
 
+	e.POST("/edit-profile", func(c echo.Context) error {
+		return profile.EditMyProfile(c, db, tmplMyProfile)
+	})
+
 	go chatManager.HandleMessage()
 	serveAssets(e)
 
