@@ -175,6 +175,14 @@ func main() {
 		return profile.EditMyProfile(c, db, tmplMyProfile)
 	})
 
+	e.GET("/current-user-posts", func(c echo.Context) error {
+		return posts.GetCurrentUsersPosts(c, db, tmplMyProfile)
+	})
+
+	e.POST("/remove-friend/:id", func(c echo.Context) error {
+		return profile.RemoveFriend(c, db, tmplFriends)
+	})
+
 	go chatManager.HandleMessage()
 	serveAssets(e)
 
