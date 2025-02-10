@@ -4,20 +4,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/styles/index.css">
+    <link rel="stylesheet" href="../assets/styles/my-profile.css?v=0.2">
     <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <title>My Profile</title>
 </head>
-<body>
-    <h1>{{ .Username }}</h1>
-    <h1>{{ .Email }}</h1>
-    <h1>{{ .CreatedAt }}</h1>
-    <img src="/profile_pictures/{{ .ProfilePicture }}" alt="">
+<body class="my-profile">
+    <header class="mb-5">
+        <nav class="navigation">
+            <a href="/"><h3 class="mt-2 fw-normal"><span class="fw-bolder">Social</span>Network</h3></a>
+        </nav>
+    </header>
 
-    <div hx-get="/friends" hx-target="#friends" hx-trigger="load">
+    {{ template "profile_partial" . }}
+
+    <div class="container">
+
+        <div class="feed-wrapper">
+            <div hx-get="/current-user-posts" hx-target="#posts" hx-trigger="load">
+            </div>
+            <div id="posts"></div>
+        </div>
+
     </div>
-    <div id="friends"></div>
+
+    <div class="edit-overlay">
+        <div class="edit-box">
+            <button class="close-btn">&times;</button>
+            <div class="error-message"></div> 
+            <form hx-post="/edit-profile" hx-target=".container" hx-swap="innerHTML" enctype="multipart/form-data">
+                <input type="text" name="username" placeholder="Username" value="{{ .Username }}">
+                <input type="email" name="email" placeholder="Email" value="{{ .Email }}">
+                <input type="file" name="profile_picture" accept="image/*">
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../assets/scripts/profile.js"></script>
 </body>
 </html>
+{{ end }}
+
+{{ define "profile_partial" }}
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <img src="/profile_pictures/{{ .ProfilePicture }}" alt="" class="profile-picture">
+                <div>
+                    <h3 class="profile-username">{{ .Username }}</h3>
+                    <h3 class="profile-email">{{ .Email }}</h3>
+                </div>
+            </div>
+            <button class="btn btn-edit">Edit</button>
+        </div>
+        <h3 class="profile-created-at">{{ .CreatedAt }}</h3>
+
+        <div hx-get="/friends" hx-target="#friends" hx-trigger="load">
+        </div>
+        <div id="friends"></div>
+
+    </div>
 {{ end }}
 
 {{ define "error" }}
@@ -26,4 +75,39 @@
 
 {{ define "success" }}
     <div class="success">{{ . }}</div>
+{{ end }}
+
+{{ define "user_posts" }}
+    {{ range . }}
+    <div class="post">
+        <div class="d-flex">
+            <div class="user">
+                <img src="/profile_pictures/{{ .ProfilePicture }}" alt="" class="profile-picture">
+                <h4 class="author">{{ .Username }}</h4>
+            </div>
+            <button class="btn-edit-post">Edit</button>
+        </div>
+        <p class="content">{{ .Content }}</p>
+
+        <hr class="mb-4">
+        
+        {{ template "post-actions" . }}
+
+        {{ if .Comments }}
+            <hr>
+            <div id="comments-{{ .ID }}" class="comments">
+                {{ range .Comments }}
+                    <p><span class="comment-user-id">{{ .Username }}</span>: {{ .Content }}</p>
+                {{ end }}
+            </div>
+        {{ end }}
+        
+    </div>
+    {{ end }}
+{{ end }}
+
+{{ define "post-actions" }}
+<div class="post-actions" id="post-actions-{{ .ID }}">
+    <span>{{ .LikesCount }} Likes</span>
+</div>
 {{ end }}
