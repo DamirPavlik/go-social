@@ -26,14 +26,16 @@ type Comment struct {
 }
 
 type Post struct {
-	ID          int
-	UserID      int
-	Content     string
-	Image       string
-	CreatedAt   time.Time
-	Comments    []Comment
-	LikesCount  int
-	LikedByUser bool
+	ID             int
+	UserID         int
+	Content        string
+	Username       string
+	ProfilePicture string
+	Image          string
+	CreatedAt      time.Time
+	Comments       []Comment
+	LikesCount     int
+	LikedByUser    bool
 }
 
 func CreatePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -84,9 +86,11 @@ func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	rows, err := db.Query(`
 		SELECT 
 			p.id, p.content, p.image, p.created_at,
+			u.username, u.profile_picture,
 			COALESCE((SELECT COUNT(*) FROM likes WHERE post_id = p.id), 0) AS likes_count,
 			EXISTS (SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) AS liked_by_user
 		FROM posts p
+		JOIN users u ON p.user_id = u.id
 		WHERE p.user_id = $2
 		ORDER BY p.created_at DESC
 	`, userID, profileUserID)
@@ -100,7 +104,7 @@ func GetUserPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	var posts []Post
 	for rows.Next() {
 		var post Post
-		err := rows.Scan(&post.ID, &post.Content, &post.Image, &post.CreatedAt, &post.LikesCount, &post.LikedByUser)
+		err := rows.Scan(&post.ID, &post.Content, &post.Image, &post.CreatedAt, &post.Username, &post.ProfilePicture, &post.LikesCount, &post.LikedByUser)
 		if err != nil {
 			log.Println("error reading posts: ", err)
 			return render.RenderTemplate(c, tmpl, "error", "error reading posts")
@@ -150,7 +154,7 @@ func GetCommentsForPost(db *sql.DB, postID int) ([]Comment, error) {
 }
 
 func CommentOnPost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
-	userId, username := profile.GetCurrentUser(c, db) // Get UserID + Username
+	userId, username := profile.GetCurrentUser(c, db)
 	postId := c.Param("id")
 	content := c.FormValue("content")
 
@@ -229,4 +233,52 @@ func UnlikePost(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	}
 
 	return render.RenderTemplate(c, tmpl, "post-actions", data)
+}
+
+func GetFriendsPosts(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userID, _ := profile.GetCurrentUser(c, db)
+
+	rows, err := db.Query(`
+		SELECT 
+			p.id, p.user_id, u.username, u.profile_picture, p.content, p.image, p.created_at,
+			COALESCE((SELECT COUNT(*) FROM likes WHERE post_id = p.id), 0) AS likes_count,
+			EXISTS (SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $1) AS liked_by_user
+		FROM posts p
+		JOIN users u ON p.user_id = u.id
+		JOIN friends f ON (p.user_id = f.user1 OR p.user_id = f.user2)
+		WHERE (f.user1 = $1 OR f.user2 = $1) AND p.user_id != $1
+		ORDER BY p.created_at DESC
+	`, userID)
+
+	if err != nil {
+		log.Println("Error fetching friends' posts: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "Failed to get friends' posts")
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Username, &post.ProfilePicture, &post.Content, &post.Image, &post.CreatedAt, &post.LikesCount, &post.LikedByUser)
+		if err != nil {
+			log.Println("Error reading posts: ", err)
+			return render.RenderTemplate(c, tmpl, "error", "Error reading posts")
+		}
+
+		comments, err := GetCommentsForPost(db, post.ID)
+		if err != nil {
+			log.Println("Error fetching comments: ", err)
+			return render.RenderTemplate(c, tmpl, "error", "Error fetching comments")
+		}
+		post.Comments = comments
+
+		posts = append(posts, post)
+	}
+
+	err = render.RenderTemplate(c, tmpl, "posts_feed", posts)
+	if err != nil {
+		log.Println("Template error: ", err)
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Template error: %v", err))
+	}
+	return nil
 }
