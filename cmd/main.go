@@ -49,6 +49,7 @@ func main() {
 	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
 	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
 	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
+	tmplFeed := template.Must(template.ParseFiles(viewsPath + "templates/posts_feed.html"))
 	tmplMyProfile := template.Must(template.ParseFiles(viewsPath + "my_profile.html"))
 	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
 	tmplFriends := template.Must(template.ParseFiles(viewsPath + "templates/friends.html"))
@@ -146,6 +147,14 @@ func main() {
 		return posts.LikePost(c, db, tmplPosts)
 	})
 
+	e.POST("/feed-post/:id/like", func(c echo.Context) error {
+		return posts.LikePost(c, db, tmplFeed)
+	})
+
+	e.POST("/feed-post/:id/unlike", func(c echo.Context) error {
+		return posts.UnlikePost(c, db, tmplFeed)
+	})
+
 	e.POST("/post/:id/unlike", func(c echo.Context) error {
 		return posts.UnlikePost(c, db, tmplPosts)
 	})
@@ -156,6 +165,10 @@ func main() {
 
 	e.GET("/my-profile", func(c echo.Context) error {
 		return profile.GetMyProfile(c, db, tmplMyProfile)
+	})
+
+	e.GET("/friends-feed", func(c echo.Context) error {
+		return posts.GetFriendsPosts(c, db, tmplFeed)
 	})
 
 	go chatManager.HandleMessage()
