@@ -1,0 +1,29 @@
+{{ define "my_profile" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <title>My Profile</title>
+</head>
+<body>
+    <h1>{{ .Username }}</h1>
+    <h1>{{ .Email }}</h1>
+    <h1>{{ .CreatedAt }}</h1>
+    <img src="/profile_pictures/{{ .ProfilePicture }}" alt="">
+
+    <div hx-get="/friends" hx-target="#friends" hx-trigger="load">
+    </div>
+    <div id="friends"></div>
+</body>
+</html>
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
+
+{{ define "success" }}
+    <div class="success">{{ . }}</div>
+{{ end }}
