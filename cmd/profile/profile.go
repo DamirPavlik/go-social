@@ -7,14 +7,16 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
 type ProfileData struct {
-	ID         int
-	Username   string
-	Friendship string
+	ID             int
+	Username       string
+	Friendship     string
+	ProfilePicture string
 }
 
 func GetProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
@@ -25,7 +27,7 @@ func GetProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	}
 
 	var profile ProfileData
-	err = db.QueryRow("SELECT id, username FROM users WHERE id = $1", profileId).Scan(&profile.ID, &profile.Username)
+	err = db.QueryRow("SELECT id, username, profile_picture FROM users WHERE id = $1", profileId).Scan(&profile.ID, &profile.Username, &profile.ProfilePicture)
 	if err != nil {
 		return render.RenderTemplate(c, tmpl, "error", "user not found")
 	}
@@ -104,4 +106,32 @@ func GetCurrentUserIdJSON(c echo.Context, db *sql.DB) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]int{"success": id})
+}
+
+func GetMyProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userId, _ := GetCurrentUser(c, db)
+
+	type User struct {
+		Username       string
+		Email          string
+		ProfilePicture string
+		CreatedAt      string
+	}
+
+	var rawCreatedAt time.Time
+	var user User
+	err := db.QueryRow("SELECT username, email, profile_picture, created_at FROM users WHERE id = $1", userId).
+		Scan(&user.Username, &user.Email, &user.ProfilePicture, &rawCreatedAt)
+
+	if err != nil {
+		log.Println("Error getting user:", err)
+		if err == sql.ErrNoRows {
+			return render.RenderTemplate(c, tmpl, "error", "User not found")
+		}
+		return render.RenderTemplate(c, tmpl, "error", "Error getting user")
+	}
+
+	user.CreatedAt = rawCreatedAt.Format("02 Jan 2006, 15:04:05 MST")
+
+	return render.RenderTemplate(c, tmpl, "my_profile", user)
 }
