@@ -113,12 +113,13 @@ func DeclineFriendRequest(c echo.Context, db *sql.DB, tmpl *template.Template) e
 func GetAllFriends(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	currentUserId, _ := GetCurrentUser(c, db)
 	friends := []struct {
-		ID       int
-		Username string
+		ID             int
+		Username       string
+		ProfilePicture string
 	}{}
 
 	rows, err := db.Query(`
-		SELECT u.id, u.username
+		SELECT u.id, u.username, u.profile_picture
 		FROM friends f
 		JOIN users u ON
 			(f.user1 = $1 AND f.user2 = u.id) OR
@@ -135,10 +136,11 @@ func GetAllFriends(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 
 	for rows.Next() {
 		var friend struct {
-			ID       int
-			Username string
+			ID             int
+			Username       string
+			ProfilePicture string
 		}
-		if err := rows.Scan(&friend.ID, &friend.Username); err != nil {
+		if err := rows.Scan(&friend.ID, &friend.Username, &friend.ProfilePicture); err != nil {
 			return render.RenderTemplate(c, tmpl, "error", "err scanning")
 		}
 		friends = append(friends, friend)
