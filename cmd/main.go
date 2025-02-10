@@ -17,14 +17,40 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
-var viewsPath = "../views/"
+var (
+	db        *sql.DB
+	viewsPath = "../views/"
+	templates map[string]*template.Template
+)
 
-func initDB(dbUrl string) {
+func loadEnv() {
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Println("Warning: .env file not found")
+	}
+}
+
+func initDB() {
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL is missing in the environment variables")
+	}
 	var err error
-	db, err = sql.Open("postgres", dbUrl)
+	db, err = sql.Open("postgres", dbURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to the database:", err)
+	}
+}
+
+func loadTemplates() {
+	templates = map[string]*template.Template{
+		"auth":           template.Must(template.ParseFiles(viewsPath + "templates/auth.html")),
+		"search":         template.Must(template.ParseFiles(viewsPath + "templates/search_results.html")),
+		"profile":        template.Must(template.ParseFiles(viewsPath + "templates/profile.html")),
+		"feed":           template.Must(template.ParseFiles(viewsPath + "templates/posts_feed.html")),
+		"myProfile":      template.Must(template.ParseFiles(viewsPath + "my_profile.html")),
+		"friendRequests": template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html")),
+		"friends":        template.Must(template.ParseFiles(viewsPath + "templates/friends.html")),
+		"posts":          template.Must(template.ParseFiles(viewsPath + "templates/posts.html")),
 	}
 }
 
@@ -34,27 +60,8 @@ func serveAssets(e *echo.Echo) {
 	e.Static("/uploads/posts", "../uploads/posts")
 }
 
-func main() {
-	godotenv.Load("../.env")
-	dbURL := os.Getenv("DB_URL")
-	if dbURL == "" {
-		log.Fatal("dburl is not found in the environment")
-	}
-	initDB(dbURL)
-
-	e := echo.New()
-
-	chatManager := chat.NewChatManager(db)
-
-	tmplAuth := template.Must(template.ParseFiles(viewsPath + "templates/auth.html"))
-	tmplSearch := template.Must(template.ParseFiles(viewsPath + "templates/search_results.html"))
-	tmplProfile := template.Must(template.ParseFiles(viewsPath + "templates/profile.html"))
-	tmplFeed := template.Must(template.ParseFiles(viewsPath + "templates/posts_feed.html"))
-	tmplMyProfile := template.Must(template.ParseFiles(viewsPath + "my_profile.html"))
-	tmplFriendRequests := template.Must(template.ParseFiles(viewsPath + "templates/friend_requests.html"))
-	tmplFriends := template.Must(template.ParseFiles(viewsPath + "templates/friends.html"))
-	tmplPosts := template.Must(template.ParseFiles(viewsPath + "templates/posts.html"))
-
+func setupRoutes(e *echo.Echo, chatManager *chat.ChatManager) {
+	// Home page
 	e.GET("/", func(c echo.Context) error {
 		cookie, err := c.Cookie("session")
 		if err != nil || cookie.Value == "" {
@@ -63,127 +70,64 @@ func main() {
 		return c.File(viewsPath + "index.html")
 	})
 
-	e.GET("/register", func(c echo.Context) error {
-		return c.File(viewsPath + "register.html")
-	})
-
+	// Authentication routes
+	e.GET("/register", func(c echo.Context) error { return c.File(viewsPath + "register.html") })
 	e.GET("/login", func(c echo.Context) error {
-		cookie, err := c.Cookie("session")
-		if err == nil && cookie.Value != "" {
+		if cookie, err := c.Cookie("session"); err == nil && cookie.Value != "" {
 			return c.Redirect(http.StatusSeeOther, "/")
 		}
 		return c.File(viewsPath + "login.html")
 	})
+	e.POST("/register", func(c echo.Context) error { return auth.RegisterUser(c, db, templates["auth"]) })
+	e.POST("/login", func(c echo.Context) error { return auth.LoginUser(c, db, templates["auth"]) })
+	e.POST("/logout", func(c echo.Context) error { return auth.LogoutUser(c, templates["auth"]) })
 
-	e.POST("/register", func(c echo.Context) error {
-		cookie, err := c.Cookie("session")
-		if err == nil && cookie.Value != "" {
-			return c.Redirect(http.StatusSeeOther, "/")
-		}
-		return auth.RegisterUser(c, db, tmplAuth)
-	})
+	// Search
+	e.GET("/search", func(c echo.Context) error { return search.SearchUsers(c, db, templates["search"]) })
 
-	e.POST("/login", func(c echo.Context) error {
-		return auth.LoginUser(c, db, tmplAuth)
-	})
+	// Profile
+	e.GET("/user-username/:id", func(c echo.Context) error { return profile.GetUsernameById(c, db) })
+	e.GET("/current-user-id", func(c echo.Context) error { return profile.GetCurrentUserIdJSON(c, db) })
+	e.GET("/profile/:id", func(c echo.Context) error { return profile.GetProfile(c, db, templates["profile"]) })
+	e.GET("/my-profile", func(c echo.Context) error { return profile.GetMyProfile(c, db, templates["myProfile"]) })
+	e.POST("/edit-profile", func(c echo.Context) error { return profile.EditMyProfile(c, db, templates["myProfile"]) })
 
-	e.POST("/logout", func(c echo.Context) error {
-		return auth.LogoutUser(c, tmplAuth)
-	})
+	// Friend Requests
+	e.GET("/friend-requests", func(c echo.Context) error { return profile.GetAllFriendRequests(c, db, templates["friendRequests"]) })
+	e.GET("/friends", func(c echo.Context) error { return profile.GetAllFriends(c, db, templates["friends"]) })
+	e.POST("/profile/:id/add", func(c echo.Context) error { return profile.SendFriendRequest(c, db, templates["profile"]) })
+	e.POST("/profile/:id/add-after-decline", func(c echo.Context) error { return profile.SendFriendRequestAfterDelcine(c, db, templates["profile"]) })
+	e.POST("/accept/:id", func(c echo.Context) error { return profile.AcceptFriendRequest(c, db, templates["profile"]) })
+	e.POST("/decline/:id", func(c echo.Context) error { return profile.DeclineFriendRequest(c, db, templates["profile"]) })
+	e.POST("/remove-friend/:id", func(c echo.Context) error { return profile.RemoveFriend(c, db, templates["friends"]) })
 
-	e.GET("/search", func(c echo.Context) error {
-		return search.SearchUsers(c, db, tmplSearch)
-	})
+	// Posts
+	e.POST("/post", func(c echo.Context) error { return posts.CreatePost(c, db, templates["posts"]) })
+	e.GET("/profile/:id/posts", func(c echo.Context) error { return posts.GetUserPosts(c, db, templates["posts"]) })
+	e.GET("/friends-feed", func(c echo.Context) error { return posts.GetFriendsPosts(c, db, templates["feed"]) })
+	e.GET("/current-user-posts", func(c echo.Context) error { return posts.GetCurrentUsersPosts(c, db, templates["myProfile"]) })
+	e.POST("/post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["posts"]) })
+	e.POST("/post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["posts"]) })
+	e.POST("/post/:id/comment", func(c echo.Context) error { return posts.CommentOnPost(c, db, templates["posts"]) })
 
-	e.GET("/user-username/:id", func(c echo.Context) error {
-		return profile.GetUsernameById(c, db)
-	})
+	// Feed Likes
+	e.POST("/feed-post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["feed"]) })
+	e.POST("/feed-post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["feed"]) })
 
-	e.GET("/current-user-id", func(c echo.Context) error {
-		return profile.GetCurrentUserIdJSON(c, db)
-	})
-
-	e.GET("/profile/:id", func(c echo.Context) error {
-		return profile.GetProfile(c, db, tmplProfile)
-	})
-
-	e.POST("/profile/:id/add", func(c echo.Context) error {
-		return profile.SendFriendRequest(c, db, tmplProfile)
-	})
-
-	e.POST("/profile/:id/add-after-decline", func(c echo.Context) error {
-		return profile.SendFriendRequestAfterDelcine(c, db, tmplProfile)
-	})
-
-	e.POST("/accept/:id", func(c echo.Context) error {
-		return profile.AcceptFriendRequest(c, db, tmplProfile)
-	})
-
-	e.POST("/decline/:id", func(c echo.Context) error {
-		return profile.DeclineFriendRequest(c, db, tmplProfile)
-	})
-
-	e.GET("/friend-requests", func(c echo.Context) error {
-		return profile.GetAllFriendRequests(c, db, tmplFriendRequests)
-	})
-
-	e.GET("/friends", func(c echo.Context) error {
-		return profile.GetAllFriends(c, db, tmplFriends)
-	})
-
-	e.GET("/chat/:id", func(c echo.Context) error {
-		return chatManager.HandleChat(c)
-	})
-
-	e.POST("/post", func(c echo.Context) error {
-		return posts.CreatePost(c, db, tmplPosts)
-	})
-
-	e.GET("/profile/:id/posts", func(c echo.Context) error {
-		return posts.GetUserPosts(c, db, tmplPosts)
-	})
-
-	e.POST("/post/:id/like", func(c echo.Context) error {
-		return posts.LikePost(c, db, tmplPosts)
-	})
-
-	e.POST("/feed-post/:id/like", func(c echo.Context) error {
-		return posts.LikePost(c, db, tmplFeed)
-	})
-
-	e.POST("/feed-post/:id/unlike", func(c echo.Context) error {
-		return posts.UnlikePost(c, db, tmplFeed)
-	})
-
-	e.POST("/post/:id/unlike", func(c echo.Context) error {
-		return posts.UnlikePost(c, db, tmplPosts)
-	})
-
-	e.POST("/post/:id/comment", func(c echo.Context) error {
-		return posts.CommentOnPost(c, db, tmplPosts)
-	})
-
-	e.GET("/my-profile", func(c echo.Context) error {
-		return profile.GetMyProfile(c, db, tmplMyProfile)
-	})
-
-	e.GET("/friends-feed", func(c echo.Context) error {
-		return posts.GetFriendsPosts(c, db, tmplFeed)
-	})
-
-	e.POST("/edit-profile", func(c echo.Context) error {
-		return profile.EditMyProfile(c, db, tmplMyProfile)
-	})
-
-	e.GET("/current-user-posts", func(c echo.Context) error {
-		return posts.GetCurrentUsersPosts(c, db, tmplMyProfile)
-	})
-
-	e.POST("/remove-friend/:id", func(c echo.Context) error {
-		return profile.RemoveFriend(c, db, tmplFriends)
-	})
-
+	// Chat
+	e.GET("/chat/:id", func(c echo.Context) error { return chatManager.HandleChat(c) })
 	go chatManager.HandleMessage()
+}
+
+func main() {
+	loadEnv()
+	initDB()
+	loadTemplates()
+
+	e := echo.New()
+	chatManager := chat.NewChatManager(db)
+
+	setupRoutes(e, chatManager)
 	serveAssets(e)
 
 	e.Logger.Fatal(e.Start(":8080"))
