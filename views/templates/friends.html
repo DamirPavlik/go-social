@@ -1,0 +1,17 @@
+{{ define "friends" }}
+Friends:
+<ul>
+    {{ range . }}
+    <li id="friend-{{ .ID }}">
+        <img src="/profile_pictures/{{ .ProfilePicture }}" width="40" height="40"/>
+        <a href="/profile/{{ .ID }}">{{ .Username }}</a> 
+    </li>
+    {{ else }}
+    <li>No Friend Requests</li>
+    {{ end }}
+</ul>
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
