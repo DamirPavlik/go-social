@@ -3,14 +3,19 @@ package profile
 import (
 	"chat-go-htmx/cmd/render"
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
 )
+
+const uploadDir = "../uploads/profile_pictures/"
 
 type ProfileData struct {
 	ID             int
@@ -134,4 +139,91 @@ func GetMyProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	user.CreatedAt = rawCreatedAt.Format("02 Jan 2006, 15:04:05 MST")
 
 	return render.RenderTemplate(c, tmpl, "my_profile", user)
+}
+
+func EditMyProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	userId, _ := GetCurrentUser(c, db)
+	username := c.FormValue("username")
+	email := c.FormValue("email")
+
+	file, err := c.FormFile("profile_picture")
+	var profilePicture string
+
+	var existingUserID int
+	err = db.QueryRow("SELECT id FROM users WHERE username = $1 AND id != $2", username, userId).Scan(&existingUserID)
+
+	if err == nil {
+		log.Println("error: username already taken")
+		return render.RenderTemplate(c, tmpl, "error", "Username is already taken")
+	} else if err != sql.ErrNoRows {
+		log.Println("error checking username: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "Database error")
+	}
+
+	cookie := &http.Cookie{
+		Name:  "session",
+		Value: username,
+		Path:  "/",
+	}
+	c.SetCookie(cookie)
+
+	if file != nil {
+		src, err := file.Open()
+		if err != nil {
+			return render.RenderTemplate(c, tmpl, "error", "Error opening file")
+		}
+		defer src.Close()
+
+		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+			os.MkdirAll(uploadDir, 0755)
+		}
+
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+		filePath := filepath.Join(uploadDir, filename)
+
+		dst, err := os.Create(filePath)
+		if err != nil {
+			return render.RenderTemplate(c, tmpl, "error", "Error saving file")
+		}
+		defer dst.Close()
+
+		if _, err = dst.ReadFrom(src); err != nil {
+			return render.RenderTemplate(c, tmpl, "error", "Error writing file")
+		}
+
+		profilePicture = filename
+
+		var oldProfilePicture string
+		db.QueryRow("SELECT profile_picture FROM users WHERE id = $1", userId).Scan(&oldProfilePicture)
+		if oldProfilePicture != "default.jpg" {
+			os.Remove(filepath.Join(uploadDir, oldProfilePicture))
+		}
+	}
+	query := "UPDATE users SET username = $1, email = $2"
+	args := []interface{}{username, email}
+
+	if profilePicture != "" {
+		query += ", profile_picture = $3 WHERE id = $4"
+		args = append(args, profilePicture, userId)
+	} else {
+		query += " WHERE id = $3"
+		args = append(args, userId)
+	}
+
+	_, err = db.Exec(query, args...)
+	if err != nil {
+		log.Println("error updating user: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "Error updating profile")
+	}
+
+	var updatedUser struct {
+		Username       string
+		Email          string
+		ProfilePicture string
+		CreatedAt      time.Time
+	}
+	db.QueryRow("SELECT username, email, profile_picture, created_at FROM users WHERE id = $1", userId).Scan(&updatedUser.Username, &updatedUser.Email, &updatedUser.ProfilePicture, &updatedUser.CreatedAt)
+
+	return render.RenderTemplate(c, tmpl, "profile_partial", updatedUser)
 }
