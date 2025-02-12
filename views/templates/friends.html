@@ -5,13 +5,18 @@ Friends:
     <li id="friend-{{ .ID }}">
         <img src="/profile_pictures/{{ .ProfilePicture }}" width="40" height="40"/>
         <a href="/profile/{{ .ID }}">{{ .Username }}</a> 
+        <button hx-post="/remove-friend/{{ .ID }}">Remove Friend</button>
     </li>
     {{ else }}
-    <li>No Friend Requests</li>
+    <li class="no-friends">No Friends</li>
     {{ end }}
 </ul>
 {{ end }}
 
 {{ define "error" }}
     <div class="error">{{ . }}</div>
+{{ end }}
+
+{{ define "reload" }}
+    <script>window.location.reload();</script>
 {{ end }}
