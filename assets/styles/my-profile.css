@@ -1,0 +1,242 @@
+body.my-profile {
+    background-color: #1e1e1e;
+    color: #e6e6e6 !important;
+    font-family: "Poppins", serif !important;
+    padding-bottom: 100px;
+
+    .container {
+        max-width: 1030px !important;
+    }
+}
+
+header {
+    position: sticky;
+    top: 0;
+    .navigation {
+        background-color: #161616;
+        position: sticky;
+        padding: 15px 30px;
+        a {
+            color: #e6e6e6;
+            text-decoration: none;
+        }
+    }
+}
+
+.profile-picture {
+    width: 75px;
+    height: 75px;
+    border: 1px solid #e6e6e6;
+    border-radius: 50%;
+    margin-right: 25px;
+}
+.profile-username {
+    font-size: 24px;
+    margin-bottom: 0;
+    font-weight: 800;
+}
+.profile-email {
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 0;
+}
+
+.btn-edit {
+    padding: 10px 25px !important;
+    background: #161616 !important;
+    border: 0 !important;
+    border-radius: 4px !important;
+    color: #e6e6e6 !important;
+    font-weight: 800 !important;
+    border-radius: 5px !important;
+}
+
+.edit-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #1e1e1e;
+
+    .edit-box {
+        background: white;
+        padding: 40px 50px 40px 50px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 0px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 35px;
+        cursor: pointer;
+        color: #555;
+    }
+    
+    .close-btn:hover {
+        color: #222;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .custom-file-upload {
+        display: inline-block;
+        padding: 10px 15px;
+        background-color: #121212;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .custom-file-upload:hover {
+        background-color: #070707;
+    }
+
+
+    form {
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #121212;
+            color: #e6e6e6;
+            transition: background-color 0.3s ease;
+            border-radius: 5px;
+            text-align: center;
+        }
+    
+        button:hover {
+            background-color: #070707;
+        }
+    }
+}
+
+.feed-wrapper {
+    margin-top: 36px;
+    .post {
+        margin-bottom: 16px; 
+        padding: 20px 16px 16px 16px;
+        border-radius: 10px;
+        background-color: #161616;
+
+        .user {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+
+            .profile-picture {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                border: 1px solid #fff;
+                margin-right: 15px;
+            }
+            
+            .author {
+                margin-bottom: 0;
+                font-size: 24px;
+            }
+        }
+        .content {
+            margin-bottom: 25px;
+            font-size: 16px;
+            font-family: "Poppins", serif !important;
+        }
+
+        .post-actions {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row-reverse;
+            button {
+                background-color: transparent;
+                outline: none;
+                border: none;
+                color: #fff;
+                .like-icon {
+                    width: 20px;
+                    height: 20px;
+                    margin-right: 10px;
+                }
+            }
+        }
+
+        .comments-form {
+            input[name="content"] {
+                width: 100%;
+                padding: 10px;
+                background-color: #1e1e1e;
+                border-radius: 5px;
+                outline: none;
+                border: 1px solid #474747;
+                color: #e6e6e6;
+                margin-bottom: 12px;
+            }
+
+            button {
+                width: 100%;
+                color: #e6e6e6;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                background-color: #1e1e1e;
+                border: 1px solid #474747;
+                border-radius: 5px;
+                transition: 0.3s all linear;
+                
+                &:hover {
+                    background-color: #131313;
+                }
+            }
+        }
+
+        .comments {
+            margin-top: 24px;
+            h6 {
+                margin-bottom: 16px;
+                font-weight: 700;
+                font-size: 18px;
+            }
+        }
+
+
+    }
+}
+
+.btn-edit-post {
+    padding: 10px 15px;
+    background-color: #1e1e1e;
+    color: #e6e6e6;
+    border-radius: 4px;
+    transition: 0.3s all linear;
+    border: 0;
+
+    &:hover {
+        background-color: #151515;
+    }
+}
