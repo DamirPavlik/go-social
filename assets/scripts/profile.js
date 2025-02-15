@@ -1,0 +1,1 @@
+setupPopup(".btn.btn-edit", ".edit-overlay");
