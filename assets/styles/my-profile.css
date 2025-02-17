@@ -43,7 +43,7 @@ header {
 
 .btn-edit {
     padding: 10px 25px !important;
-    background: #161616 !important;
+    background: #03490a !important;
     border: 0 !important;
     border-radius: 4px !important;
     color: #e6e6e6 !important;
@@ -230,7 +230,7 @@ header {
 
 .btn-edit-post {
     padding: 10px 15px;
-    background-color: #1e1e1e;
+    background-color: #03490a;
     color: #e6e6e6;
     border-radius: 4px;
     transition: 0.3s all linear;
@@ -238,5 +238,37 @@ header {
 
     &:hover {
         background-color: #151515;
+    }
+}
+
+.friends-lists {
+    margin-top: 15px;
+    padding-left: 0;
+    list-style: none;
+    li {
+        img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #e6e6e6;
+            margin-right: 15px;
+        }
+
+        a {
+            font-size: 16px;
+            color: #e6e6e6;
+            text-decoration: none;
+            margin-bottom: 0;
+        }
+
+        button {
+            padding: 10px 25px !important;
+            background: #6c0707 !important;
+            border: 0 !important;
+            border-radius: 4px !important;
+            color: #e6e6e6 !important;
+            font-weight: 600 !important;
+            border-radius: 5px !important;
+        }
     }
 }
