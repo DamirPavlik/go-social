@@ -26,3 +26,27 @@ async function getUsernameById(id) {
         console.error("Error fetching username:", error);
     }
 }
+
+/**
+ * Sets up a popup with open and close functionality.
+ * 
+ * @param {string} buttonSelector - The CSS selector for the button that opens the popup.
+ * @param {string} popupSelector - The CSS selector for the popup element.
+ */
+function setupPopup(buttonSelector, popupSelector) {
+    const button = document.querySelector(buttonSelector);
+    const popup = document.querySelector(popupSelector);
+    if (!button || !popup) return;
+
+    const closeButton = popup.querySelector(".close-btn");
+    if (!closeButton) return;
+
+    button.addEventListener("click", () => popup.style.display = "flex");
+    closeButton.addEventListener("click", () => popup.style.display = "none");
+    
+    popup.addEventListener("click", (event) => {
+        if (event.target === popup) {
+            popup.style.display = "none";
+        }
+    });
+}
