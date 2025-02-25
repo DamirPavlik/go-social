@@ -3,6 +3,7 @@ package main
 import (
 	"chat-go-htmx/cmd/auth"
 	"chat-go-htmx/cmd/chat"
+	"chat-go-htmx/cmd/middleware"
 	"chat-go-htmx/cmd/posts"
 	"chat-go-htmx/cmd/profile"
 	"chat-go-htmx/cmd/search"
@@ -82,40 +83,43 @@ func setupRoutes(e *echo.Echo, chatManager *chat.ChatManager) {
 	e.POST("/login", func(c echo.Context) error { return auth.LoginUser(c, db, templates["auth"]) })
 	e.POST("/logout", func(c echo.Context) error { return auth.LogoutUser(c, templates["auth"]) })
 
+	authGroup := e.Group("")
+	authGroup.Use(middleware.AuthMiddleware())
+
 	// Search
-	e.GET("/search", func(c echo.Context) error { return search.SearchUsers(c, db, templates["search"]) })
+	authGroup.GET("/search", func(c echo.Context) error { return search.SearchUsers(c, db, templates["search"]) })
 
 	// Profile
-	e.GET("/user-username/:id", func(c echo.Context) error { return profile.GetUsernameById(c, db) })
-	e.GET("/current-user-id", func(c echo.Context) error { return profile.GetCurrentUserIdJSON(c, db) })
-	e.GET("/profile/:id", func(c echo.Context) error { return profile.GetProfile(c, db, templates["profile"]) })
-	e.GET("/my-profile", func(c echo.Context) error { return profile.GetMyProfile(c, db, templates["myProfile"]) })
-	e.POST("/edit-profile", func(c echo.Context) error { return profile.EditMyProfile(c, db, templates["myProfile"]) })
+	authGroup.GET("/user-username/:id", func(c echo.Context) error { return profile.GetUsernameById(c, db) })
+	authGroup.GET("/current-user-id", func(c echo.Context) error { return profile.GetCurrentUserIdJSON(c, db) })
+	authGroup.GET("/profile/:id", func(c echo.Context) error { return profile.GetProfile(c, db, templates["profile"]) })
+	authGroup.GET("/my-profile", func(c echo.Context) error { return profile.GetMyProfile(c, db, templates["myProfile"]) })
+	authGroup.POST("/edit-profile", func(c echo.Context) error { return profile.EditMyProfile(c, db, templates["myProfile"]) })
 
 	// Friend Requests
-	e.GET("/friend-requests", func(c echo.Context) error { return profile.GetAllFriendRequests(c, db, templates["friendRequests"]) })
-	e.GET("/friends", func(c echo.Context) error { return profile.GetAllFriends(c, db, templates["friends"]) })
-	e.POST("/profile/:id/add", func(c echo.Context) error { return profile.SendFriendRequest(c, db, templates["profile"]) })
-	e.POST("/profile/:id/add-after-decline", func(c echo.Context) error { return profile.SendFriendRequestAfterDelcine(c, db, templates["profile"]) })
-	e.POST("/accept/:id", func(c echo.Context) error { return profile.AcceptFriendRequest(c, db, templates["profile"]) })
-	e.POST("/decline/:id", func(c echo.Context) error { return profile.DeclineFriendRequest(c, db, templates["profile"]) })
-	e.POST("/remove-friend/:id", func(c echo.Context) error { return profile.RemoveFriend(c, db, templates["friends"]) })
+	authGroup.GET("/friend-requests", func(c echo.Context) error { return profile.GetAllFriendRequests(c, db, templates["friendRequests"]) })
+	authGroup.GET("/friends", func(c echo.Context) error { return profile.GetAllFriends(c, db, templates["friends"]) })
+	authGroup.POST("/profile/:id/add", func(c echo.Context) error { return profile.SendFriendRequest(c, db, templates["profile"]) })
+	authGroup.POST("/profile/:id/add-after-decline", func(c echo.Context) error { return profile.SendFriendRequestAfterDelcine(c, db, templates["profile"]) })
+	authGroup.POST("/accept/:id", func(c echo.Context) error { return profile.AcceptFriendRequest(c, db, templates["profile"]) })
+	authGroup.POST("/decline/:id", func(c echo.Context) error { return profile.DeclineFriendRequest(c, db, templates["profile"]) })
+	authGroup.POST("/remove-friend/:id", func(c echo.Context) error { return profile.RemoveFriend(c, db, templates["friends"]) })
 
 	// Posts
-	e.POST("/post", func(c echo.Context) error { return posts.CreatePost(c, db, templates["posts"]) })
-	e.GET("/profile/:id/posts", func(c echo.Context) error { return posts.GetUserPosts(c, db, templates["posts"]) })
-	e.GET("/friends-feed", func(c echo.Context) error { return posts.GetFriendsPosts(c, db, templates["feed"]) })
-	e.GET("/current-user-posts", func(c echo.Context) error { return posts.GetCurrentUsersPosts(c, db, templates["myProfile"]) })
-	e.POST("/post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["posts"]) })
-	e.POST("/post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["posts"]) })
-	e.POST("/post/:id/comment", func(c echo.Context) error { return posts.CommentOnPost(c, db, templates["posts"]) })
+	authGroup.POST("/post", func(c echo.Context) error { return posts.CreatePost(c, db, templates["posts"]) })
+	authGroup.GET("/profile/:id/posts", func(c echo.Context) error { return posts.GetUserPosts(c, db, templates["posts"]) })
+	authGroup.GET("/friends-feed", func(c echo.Context) error { return posts.GetFriendsPosts(c, db, templates["feed"]) })
+	authGroup.GET("/current-user-posts", func(c echo.Context) error { return posts.GetCurrentUsersPosts(c, db, templates["myProfile"]) })
+	authGroup.POST("/post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["posts"]) })
+	authGroup.POST("/post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["posts"]) })
+	authGroup.POST("/post/:id/comment", func(c echo.Context) error { return posts.CommentOnPost(c, db, templates["posts"]) })
 
 	// Feed Likes
-	e.POST("/feed-post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["feed"]) })
-	e.POST("/feed-post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["feed"]) })
+	authGroup.POST("/feed-post/:id/like", func(c echo.Context) error { return posts.LikePost(c, db, templates["feed"]) })
+	authGroup.POST("/feed-post/:id/unlike", func(c echo.Context) error { return posts.UnlikePost(c, db, templates["feed"]) })
 
 	// Chat
-	e.GET("/chat/:id", func(c echo.Context) error { return chatManager.HandleChat(c) })
+	authGroup.GET("/chat/:id", func(c echo.Context) error { return chatManager.HandleChat(c) })
 	go chatManager.HandleMessage()
 }
 
