@@ -15,12 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// type User struct {
-// 	ID       int    `json:"id"`
-// 	Username string `json:"username"`
-// 	Password string `json:"password"`
-// }
-
 const uploadDir = "../uploads/profile_pictures/"
 
 func RegisterUser(c echo.Context, db *sql.DB, tmpl *template.Template) error {
