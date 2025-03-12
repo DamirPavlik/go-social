@@ -1,6 +1,7 @@
 package search
 
 import (
+	"chat-go-htmx/cmd/profile"
 	"database/sql"
 	"html/template"
 	"net/http"
@@ -15,12 +16,13 @@ type User struct {
 
 func SearchUsers(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 	query := c.QueryParam("q")
+	currentUserId, _ := profile.GetCurrentUser(c, db)
 
 	if query == "" {
 		return c.HTML(http.StatusOK, "")
 	}
 
-	rows, err := db.Query("SELECT id, username FROM users WHERE username ILIKE '%' || $1 || '%' LIMIT 10", query)
+	rows, err := db.Query("SELECT id, username FROM users WHERE username ILIKE '%' || $1 || '%' AND id != $2 LIMIT 10", query, currentUserId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Database error")
 	}
