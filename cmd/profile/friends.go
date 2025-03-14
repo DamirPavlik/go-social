@@ -203,3 +203,26 @@ func GetAllFriendRequests(c echo.Context, db *sql.DB, tmpl *template.Template) e
 	}
 	return nil
 }
+
+func RemoveFriend(c echo.Context, db *sql.DB, tmpl *template.Template) error {
+	currentUserId, _ := GetCurrentUser(c, db)
+	userId, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return render.RenderTemplate(c, tmpl, "error", "invalid user id")
+	}
+
+	_, err = db.Exec("DELETE FROM friend_request WHERE (sender_id = $1 AND reciever_id = $2) OR (sender_id = $2 AND reciever_id = $1)", currentUserId, userId)
+	if err != nil {
+		log.Println("err friend requests: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "err deleting friend requests")
+	}
+
+	_, err = db.Exec(`DELETE FROM friends WHERE (user1 = $1 AND user2 = $2) OR (user1 = $2 AND user2 = $1)`, currentUserId, userId)
+	if err != nil {
+		log.Println("err deleting user: ", err)
+		return render.RenderTemplate(c, tmpl, "error", "err deleting user")
+	}
+
+	return render.RenderTemplate(c, tmpl, "reload", "")
+}
