@@ -16,6 +16,7 @@ type Message struct {
 	SenderID   int    `json:"sender_id"`
 	RecieverID int    `json:"reciever_id"`
 	Content    string `json:"content"`
+	CreatedAt  string `json:"created_at"`
 }
 
 type ChatManager struct {
@@ -27,7 +28,7 @@ type ChatManager struct {
 }
 
 func NewChatManager(db *sql.DB) *ChatManager {
-	return &ChatManager{
+	cm := &ChatManager{
 		clients:   make(map[*websocket.Conn]int),
 		broadcast: make(chan Message),
 		upgrader: websocket.Upgrader{
@@ -35,6 +36,8 @@ func NewChatManager(db *sql.DB) *ChatManager {
 		},
 		db: db,
 	}
+	go cm.HandleMessage()
+	return cm
 }
 
 func (cm *ChatManager) HandleChat(c echo.Context) error {
@@ -54,6 +57,27 @@ func (cm *ChatManager) HandleChat(c echo.Context) error {
 	cm.clients[conn] = userId
 	cm.mu.Unlock()
 
+	rows, err := cm.db.Query(`
+		SELECT sender_id, reciever_id, content, created_at
+		FROM messages
+		WHERE (sender_id = $1 AND reciever_id = $2) OR (sender_id = $2 AND reciever_id = $1)
+		ORDER BY created_at ASC`, userId, recieverId)
+	if err != nil {
+		log.Println("Error fetching messages:", err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var msg Message
+		err := rows.Scan(&msg.SenderID, &msg.RecieverID, &msg.Content, &msg.CreatedAt)
+		if err != nil {
+			log.Println("Error scanning message:", err)
+			continue
+		}
+		conn.WriteJSON(msg)
+	}
+
 	for {
 		var msg Message
 		err := conn.ReadJSON(&msg)
@@ -69,7 +93,7 @@ func (cm *ChatManager) HandleChat(c echo.Context) error {
 
 		_, err = cm.db.Exec("INSERT INTO messages (sender_id, reciever_id, content) VALUES ($1, $2, $3)", msg.SenderID, msg.RecieverID, msg.Content)
 		if err != nil {
-			log.Println("err saving message: ", err)
+			log.Println("Error saving message:", err)
 			continue
 		}
 
@@ -85,7 +109,12 @@ func (cm *ChatManager) HandleMessage() {
 		cm.mu.Lock()
 		for conn, userId := range cm.clients {
 			if userId == msg.RecieverID || userId == msg.SenderID {
-				conn.WriteJSON(msg)
+				err := conn.WriteJSON(msg)
+				if err != nil {
+					log.Println("Error sending message:", err)
+					conn.Close()
+					delete(cm.clients, conn)
+				}
 			}
 		}
 		cm.mu.Unlock()
