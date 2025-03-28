@@ -136,7 +136,7 @@ func GetMyProfile(c echo.Context, db *sql.DB, tmpl *template.Template) error {
 		return render.RenderTemplate(c, tmpl, "error", "Error getting user")
 	}
 
-	user.CreatedAt = rawCreatedAt.Format("02 Jan 2006, 15:04:05 MST")
+	user.CreatedAt = rawCreatedAt.Format("02 Jan 2006, 15:04")
 
 	return render.RenderTemplate(c, tmpl, "my_profile", user)
 }
