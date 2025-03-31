@@ -13,9 +13,11 @@
         <h1 class="main-heading">Register</h1>
         <div id="response-message"></div>
 
-        <form id="register-form" hx-post="/register" hx-target="#response-message" hx-swap="innerHTML">
+        <form id="register-form" hx-post="/register" hx-target="#response-message" hx-swap="innerHTML" enctype="multipart/form-data">
             <input type="text" name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
+            <input type="file" name="profile_picture" accept="image/*">
             <button type="submit">Register</button>
         </form>
 
