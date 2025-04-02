@@ -1,0 +1,7 @@
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
+
+{{ define "redirect" }}
+    <script>window.location.href = "{{ . }}";</script>
+{{ end }}
