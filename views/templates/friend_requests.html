@@ -1,0 +1,26 @@
+{{ define "friend_requests" }}
+<ul>
+    {{ range . }}
+    <li id="friend-request-{{ .ID }}">
+        <a href="/profile/{{ .ID }}">{{ .Username }}</a> 
+        <div>
+            <button class="btn btn-accept" hx-post="/accept/{{ .ID }}" hx-trigger="click" hx-target="#friend-request-{{ .ID }}" hx-swap="outerHTML">
+                <img src="../../assets/images/check (1).png" class="icon" alt="">
+                <div class="tooltip">Accept Friend Request</div>
+            </button>
+            <button class="btn btn-decline" hx-post="/decline/{{ .ID }}" hx-trigger="click" hx-target="#friend-request-{{ .ID }}" hx-swap="outerHTML">
+                <img src="../../assets/images/decline.png" class="icon" alt="">
+                <div class="tooltip">Decline Friend Request</div>
+            </button>
+        </div>
+    </li>
+    {{ else }}
+    <li class="no-friend-requests">No Friend Requests</li>
+    {{ end }}
+</ul>
+<div id="friend-request-msg"></div>
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
