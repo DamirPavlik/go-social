@@ -1,11 +1,15 @@
 {{ define "friends" }}
 Friends:
-<ul>
+<ul class="friends-lists">
     {{ range . }}
     <li id="friend-{{ .ID }}">
-        <img src="/profile_pictures/{{ .ProfilePicture }}" width="40" height="40"/>
-        <a href="/profile/{{ .ID }}">{{ .Username }}</a> 
-        <button hx-post="/remove-friend/{{ .ID }}">Remove Friend</button>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <img src="/profile_pictures/{{ .ProfilePicture }}" width="40" height="40"/>
+                <a href="/profile/{{ .ID }}">{{ .Username }}</a> 
+            </div>
+            <button hx-post="/remove-friend/{{ .ID }}">Remove Friend</button>
+        </div>
     </li>
     {{ else }}
     <li class="no-friends">No Friends</li>
