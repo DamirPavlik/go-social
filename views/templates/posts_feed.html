@@ -1,0 +1,51 @@
+{{ define "posts_feed" }}
+    {{ range . }}
+        <div class="post">
+            <div class="user">
+                <img src="/profile_pictures/{{ .ProfilePicture }}" alt="" class="profile-picture">
+                <h4 class="author">{{ .Username }}</h4>
+            </div>
+            <p class="content">{{ .Content }}</p>
+            {{ if .Image }}
+                <img src="{{ .Image }}" alt="Post image">
+            {{ end }}
+            <hr class="mb-4">
+
+            {{ template "post-actions" . }}
+
+            <hr>
+            
+            <div id="comments-{{ .ID }}" class="comments">
+                <h6>Comments: </h6>
+                {{ range .Comments }}
+                    <p><strong>{{ .Username }}</strong>: {{ .Content }}</p>
+                {{ end }}
+            </div>
+
+            <form 
+                class="comments-form"
+                hx-post="/post/{{ .ID }}/comment" 
+                hx-target="#comments-{{ .ID }}" 
+                hx-swap="beforeend">
+                <input type="text" name="content" placeholder="Comment" required>
+                <button type="submit">Comment</button>
+            </form>
+        </div>
+    {{ end }}
+{{ end }}
+
+{{ define "post-actions" }}
+<div class="post-actions" id="post-actions-{{ .ID }}">
+    <button 
+        hx-post="/feed-post/{{ .ID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
+        hx-swap="outerHTML"
+        hx-target="#post-actions-{{ .ID }}">
+        {{ if .LikedByUser }}<img src="../../assets/images/heart-full.png" class="like-icon"/>Unlike{{ else }}<img src="../../assets/images/heart.png" class="like-icon"/>Like{{ end }}
+    </button>
+    <span>{{ .LikesCount }} Likes</span>
+</div>
+{{ end }}
+
+{{ define "error" }}
+    <div class="error">{{ . }}</div>
+{{ end }}
