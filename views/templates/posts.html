@@ -1,28 +1,32 @@
 {{ define "user_posts" }}
-posts: 
     {{ range . }}
-    <div class="post" style="border: 1px solid red;">
-        <p>{{ .Content }}</p>
+    <div class="post">
+        <div class="user">
+            <img src="/profile_pictures/{{ .ProfilePicture }}" alt="" class="profile-picture">
+            <h4 class="author">{{ .Username }}</h4>
+        </div>
+        <p class="content">{{ .Content }}</p>
 
-        {{ if .Image }}
-            <img src="{{ .Image }}" alt="Post Image">
-        {{ end }}
+        <hr class="mb-4">
         
         {{ template "post-actions" . }}
 
+        <hr>
+
+        <div id="comments-{{ .ID }}" class="comments">
+            {{ range .Comments }}
+                <p><span class="comment-user-id">{{ .Username }}</span>: {{ .Content }}</p>
+            {{ end }}
+        </div>
+
         <form 
+            class="comments-form"
             hx-post="/post/{{ .ID }}/comment" 
             hx-target="#comments-{{ .ID }}" 
             hx-swap="beforeend">
             <input type="text" name="content" placeholder="Comment" required>
             <button type="submit">Comment</button>
         </form>
-
-        <div id="comments-{{ .ID }}">
-            {{ range .Comments }}
-                <p><span class="comment-user-id">{{ .UserID }}</span>: {{ .Content }}</p>
-            {{ end }}
-        </div>
 
     </div>
     {{ end }}
@@ -34,14 +38,14 @@ posts:
         hx-post="/post/{{ .ID }}/{{ if .LikedByUser }}unlike{{ else }}like{{ end }}" 
         hx-swap="outerHTML"
         hx-target="#post-actions-{{ .ID }}">
-        {{ if .LikedByUser }}Unlike{{ else }}Like{{ end }}
+        {{ if .LikedByUser }}<img src="../../assets/images/heart-full.png" class="like-icon"/>Unlike{{ else }}<img src="../../assets/images/heart.png" class="like-icon"/>Like{{ end }}
     </button>
     <span>{{ .LikesCount }} Likes</span>
 </div>
 {{ end }}
 
 {{ define "single_comment" }}
-    <p>{{ .Content }}</p>
+    <p><strong>{{ .Username }}</strong>: {{ .Content }}</p>
 {{ end }}
 
 {{ define "like_button" }}
