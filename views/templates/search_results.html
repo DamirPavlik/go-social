@@ -1,0 +1,9 @@
+{{ define "search_results" }}
+<ul>
+    {{ range . }}
+    <li><a href="/profile/{{ .ID }}">{{ .Username }}</a></li>
+    {{ else }}
+    <li>No users found</li>
+    {{ end }}
+</ul>
+{{ end }}
